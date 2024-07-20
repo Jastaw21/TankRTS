@@ -45,6 +45,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Variables")
     float RotationSpeed = 2.0f;
 
+
+    UPROPERTY( EditAnywhere, BlueprintReadWrite, Category = "Movement Variables" )
+    float RotationTolerance = 0.1f;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     bool bLoggingEnabled = false;
 

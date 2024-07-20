@@ -57,6 +57,10 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
 
     FRotator DeltaRot = GetNewVelocity(DeltaTime).Rotation() - PawnOwner->GetActorRotation();
 
+    if (DeltaRot.IsNearlyZero(RotationTolerance)) {
+        return PawnOwner->GetActorRotation();
+    }
+
     if (bShouldPrintToLog) {
         UE_LOG(MovementLogs, Display, TEXT("Current Rotation: %s"), *PawnOwner->GetActorRotation().ToCompactString());
         UE_LOG(MovementLogs, Display, TEXT("Desired Rotation: %s"), *Velocity.Rotation().ToCompactString());
@@ -80,7 +84,7 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
     float NewPitch = MaxRotation * PitchScale * FMath::Sign(PitchVar);
     float NewYaw = MaxRotation * YawScale * FMath::Sign(YawVar);
 
-    FRotator ReturnRotator = FRotator(NewPitch, NewYaw, 0.0f);
+    FRotator ReturnRotator = PawnOwner->GetActorRotation() + FRotator(NewPitch, NewYaw, 0.0f);
 
     if (bShouldPrintToLog) {
         UE_LOG(MovementLogs, Display, TEXT("Output Rotation: %s"), *ReturnRotator.ToCompactString());

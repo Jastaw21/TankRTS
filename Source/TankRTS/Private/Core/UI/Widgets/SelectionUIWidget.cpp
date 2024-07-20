@@ -2,10 +2,13 @@
 
 #include "TankRTS/Public/Core/UI/Widgets/SelectionUIWidget.h"
 
+#include "Core/Game Mode/RTSGameState.h"
+#include "GameFramework/GameStateBase.h"
+
 void USelectionUIWidget::ResetNumUnitsSelected()
 {
     NumUnitsSelected = 0;
-    TextToShow = FString::FromInt(NumUnitsSelected);
+    TextToShow = "";
 }
 
 void USelectionUIWidget::IncrementNumUnitsSelected()
@@ -19,10 +22,24 @@ FString USelectionUIWidget::GetJWUnitsAsText()
     FString Value;
     if (NumUnitsSelected == 0) {
         Value = "";
-    }
-    else {
+    } else {
         Value = FString::FromInt(NumUnitsSelected);
     }
 
     return Value;
+}
+
+int USelectionUIWidget::GetNumberUnits()
+{
+
+    if (GetWorld()) {
+        AGameStateBase* TempGameState = GetWorld()->GetGameState();
+
+        if (TempGameState) {
+            ARTSGameState* RTSState = Cast<ARTSGameState, AGameStateBase>(TempGameState);
+            return RTSState->GetNumPlayerControlledInteractables();
+        }
+    }
+
+    return -1;
 }

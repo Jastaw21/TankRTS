@@ -10,7 +10,7 @@
 #include "SelectionUIWidget.generated.h"
 
 /**
- *
+ Displays the unit selection info for the player
  */
 
 UCLASS()
@@ -29,4 +29,6 @@ public:
     UFUNCTION(BlueprintCallable)
     FString GetJWUnitsAsText();
 
+    UFUNCTION(BlueprintCallable)
+    int GetNumberUnits();
 };

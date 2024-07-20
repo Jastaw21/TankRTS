@@ -6,6 +6,8 @@
 #include "Core/Units/Base/UnitBase.h"
 #include "GameFramework/HUD.h"
 #include "TankRTS/Public/Core/UI/HUD/TankRTSHud.h"
+#include "Core/Game Mode/RTSGameState.h"
+
 
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
@@ -101,7 +103,17 @@ void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
     if (Parent->GetSelectionUIWidget()) {
         Parent->GetSelectionUIWidget()->IncrementNumUnitsSelected();
     }
+
+    if (GetWorld()) {
+        AGameStateBase* TempGameState = GetWorld()->GetGameState();
+
+        if (TempGameState) {
+            ARTSGameState* RTSState = Cast<ARTSGameState, AGameStateBase>(TempGameState);
+            RTSState->InsertPlayerControlledInteractable();
+        }
+    }
 }
+
 void UUnitCommanderComponent::GetUnitDestination()
 {
     UE_LOG(LogTemp, Display, TEXT("New Double Click Called"));

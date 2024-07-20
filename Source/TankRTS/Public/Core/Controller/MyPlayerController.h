@@ -41,25 +41,20 @@ public:
     UCameraControllerComponent* CameraControllerComponent;
     UPROPERTY(VisibleAnywhere, Category = "Unit Controller")
     UUnitCommanderComponent* UnitCommanderComponent;
-
-    // used by movement subcomponent
-    FORCEINLINE ATankWidget* GetControlledCameraWidget() { return ControlledCameraWidget; }
-
     // selected unit UI components
-    UPROPERTY(EditAnywhere)
+    UPROPERTY( EditAnywhere )
     TSubclassOf<class USelectionUIWidget> PlayerUIClass;
     UPROPERTY()
     USelectionUIWidget* PlayerUI;
 
+    // used by movement subcomponent
+    FORCEINLINE ATankWidget* GetControlledCameraWidget() { return ControlledCameraWidget; }   
     // event to be triggered by the hud notifying units have been selected
     void NotifyUnitsAreSelected();
-
     FORCEINLINE USelectionUIWidget* GetSelectionUIWidget() { return PlayerUI; }
 
 protected:
     ATankWidget* ControlledCameraWidget;
-    TArray<AUnitBase*> SubscribedUnits; // Where we'll store pointers to the units under command
-
     ATankRTSHud* GetHUDCasted();
 
 private:

@@ -65,14 +65,14 @@ void ATankRTSHud::StopDrawingRect()
     bShouldDrawRect = false;
 }
 
-TArray<AUnitBase*>* ATankRTSHud::GetSelectedUnits()
-{
-    return &SelectedUnitArray;
-}
-
 void ATankRTSHud::EmptyLocalUnitsCollection()
 {
     SelectedUnitArray.Empty();
+}
+
+TArray<AUnitBase*>* ATankRTSHud::GetSelectedUnits()
+{
+    return &SelectedUnitArray;
 }
 
 void ATankRTSHud::DrawSelectionBox()

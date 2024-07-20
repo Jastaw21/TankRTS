@@ -75,7 +75,7 @@ void AMyPlayerController::BeginPlay()
 
 void AMyPlayerController::NotifyUnitsAreSelected()
 {
-    return;
+    UnitCommanderComponent->FetchHUDSelectedUnits();
 }
 
 ATankRTSHud* AMyPlayerController::GetHUDCasted()

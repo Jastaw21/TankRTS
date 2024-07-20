@@ -62,6 +62,20 @@ void UUnitCommanderComponent::SetControlInputs(UInputComponent* InputComponent)
     InputComponent->BindAxis("MouseX", this, &UUnitCommanderComponent::UpdateMousePositions);
 }
 
+void UUnitCommanderComponent::FetchHUDSelectedUnits()
+{
+    if (GetHUDCasted() != nullptr) {
+
+        TArray<AUnitBase*>* ReturnedArray = GetHUDCasted()->GetSelectedUnits();
+
+        if (ReturnedArray) {
+            for (AUnitBase* Unit : *ReturnedArray) {
+                SelectUnit(Unit);
+            }
+        }
+    }
+}
+
 // used to see if theres a unit under the cursor
 void UUnitCommanderComponent::PollAreaUnderCursor()
 {
@@ -142,8 +156,7 @@ void UUnitCommanderComponent::UpdateMousePositions(float Value)
 void UUnitCommanderComponent::StartRectangleDrawing()
 {
     bIsSelectionBoxBeingDrawn = true;
-    if (Parent)
-    {
+    if (Parent) {
         Parent->GetMousePosition(MouseStart.X, MouseStart.Y);
         Parent->GetMousePosition(MouseEnd.X, MouseEnd.Y);
     }

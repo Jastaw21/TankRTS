@@ -44,9 +44,10 @@ public:
     void AskToDrawRect(float in_X, float in_Y, float in_CurrentXPos, float in_CurrentYPos, AMyPlayerController* ControllerPtr_);
     // to be used by the player controller, to cancel drawing the rectangle
     void StopDrawingRect();
-    // player controller will call this to get the units
-    TArray<AUnitBase*>* GetSelectedUnits();
+    
     void EmptyLocalUnitsCollection();
+
+    TArray<AUnitBase*>* GetSelectedUnits( );
 
 
 private:

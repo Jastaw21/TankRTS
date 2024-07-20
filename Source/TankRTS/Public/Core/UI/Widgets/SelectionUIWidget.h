@@ -29,6 +29,9 @@ public:
     UFUNCTION(BlueprintCallable)
     FString GetJWUnitsAsText();
 
+    UFUNCTION( BlueprintCallable )
+    FString GetRotator();
+
     UFUNCTION(BlueprintCallable)
     int GetNumberUnits();
 };

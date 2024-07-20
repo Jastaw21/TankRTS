@@ -10,6 +10,8 @@ Generated Sep
 */
 #include "UnitNavMovementComponent.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN( MovementLogs, Display, All );
+
 class AUnitBase;
 
 /**
@@ -43,6 +45,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Variables")
     float RotationSpeed = 2.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
+    bool bLoggingEnabled = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
+    float LoggingInterval = 2.0f;
+
 private:
     AUnitBase* OwningUnit;
 
@@ -51,4 +59,8 @@ private:
 
     FVector GetNewVelocity(float DeltaTime);
     FRotator GetNewRotator(float DeltaTime);
+
+    void PushRotator(FRotator& inRotator);
+
+    float RunningLoggingTime { 0.0f };
 };

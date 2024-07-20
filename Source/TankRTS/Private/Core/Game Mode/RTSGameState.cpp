@@ -13,9 +13,9 @@ void ARTSGameState::BeginPlay()
 }
 
 TArray<ARTSInteractableBase*>& ARTSGameState::GetPlayerControlledInteractables()
-    {
+{
     return PlayerControlledInteractables;
-    }
+}
 
 int ARTSGameState::GetNumPlayerControlledInteractables()
 {
@@ -28,6 +28,16 @@ void ARTSGameState::InsertPlayerControlledInteractable()
 }
 
 void ARTSGameState::EmptyPlayerControlledInteractable()
-    {
+{
     PlayerControlledInteractables.Empty();
+}
+
+void ARTSGameState::SetRotator(FRotator& InRotator)
+{
+    RotatorString = InRotator.ToString();
+}
+
+FString ARTSGameState::GetRotatorString()
+    {
+    return RotatorString;
     }

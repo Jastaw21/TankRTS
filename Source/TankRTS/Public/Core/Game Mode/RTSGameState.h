@@ -26,6 +26,10 @@ public:
 
     int TempNumControlled = 0;
 
+    void SetRotator(FRotator& InRotator);
+    FString RotatorString;
+    FString GetRotatorString();
+
 protected:
 private:
     TArray<ARTSInteractableBase*> PlayerControlledInteractables;

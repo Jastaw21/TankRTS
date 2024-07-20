@@ -29,6 +29,20 @@ FString USelectionUIWidget::GetJWUnitsAsText()
     return Value;
 }
 
+FString USelectionUIWidget::GetRotator()
+{
+    if (GetWorld()) {
+        AGameStateBase* TempGameState = GetWorld()->GetGameState();
+
+        if (TempGameState) {
+            ARTSGameState* RTSState = Cast<ARTSGameState, AGameStateBase>(TempGameState);
+            return RTSState->GetRotatorString();
+        }
+    }
+
+    return FString("");
+}
+
 int USelectionUIWidget::GetNumberUnits()
 {
 

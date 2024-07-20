@@ -1,7 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Core/Units/Components/UnitNavMovementComponent.h"
+
+#include "Core/Game Mode/RTSGameState.h"
 #include "Core/Units/Base/UnitBase.h"
+#include "GameFramework/GameState.h"
+
+DEFINE_LOG_CATEGORY(MovementLogs);
 
 UUnitNavMovementComponent::UUnitNavMovementComponent()
 {
@@ -46,23 +51,56 @@ FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
 
 FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
 {
+    RunningLoggingTime += DeltaTime;
+
+    bool bShouldPrintToLog = (bLoggingEnabled && RunningLoggingTime >= LoggingInterval);
+
     FRotator DeltaRot = GetNewVelocity(DeltaTime).Rotation() - PawnOwner->GetActorRotation();
-   
+
+    if (bShouldPrintToLog) {
+        UE_LOG(MovementLogs, Display, TEXT("Current Rotation: %s"), *PawnOwner->GetActorRotation().ToCompactString());
+        UE_LOG(MovementLogs, Display, TEXT("Desired Rotation: %s"), *Velocity.Rotation().ToCompactString());
+        UE_LOG(MovementLogs, Display, TEXT("Delta Rotation: %s"), *DeltaRot.ToCompactString());
+    }
+
     float PitchVar = DeltaRot.Pitch;
     float YawVar = DeltaRot.Yaw;
-    float RollVar = DeltaRot.Roll;
 
-    float AbsDesiredRotationScale = FMath::Abs(PitchVar) + FMath::Abs(YawVar) + FMath::Abs(RollVar);
+    float AbsDesiredRotationScale = FMath::Abs(PitchVar) + FMath::Abs(YawVar);
 
     float PitchScale = FMath::Abs(PitchVar) / AbsDesiredRotationScale;
     float YawScale = FMath::Abs(YawVar) / AbsDesiredRotationScale;
-    float RollScale = FMath::Abs(RollVar) / AbsDesiredRotationScale;
+
+    if (bShouldPrintToLog) {
+        UE_LOG(MovementLogs, Display, TEXT("Total Scale %f"), (PitchScale + YawScale));
+    }
 
     float MaxRotation = RotationSpeed * DeltaTime;
 
     float NewPitch = MaxRotation * PitchScale * FMath::Sign(PitchVar);
     float NewYaw = MaxRotation * YawScale * FMath::Sign(YawVar);
-    float NewRoll = MaxRotation * RollScale * FMath::Sign(RollVar);
 
-    return FRotator(NewPitch, NewYaw, NewRoll);
+    FRotator ReturnRotator = FRotator(NewPitch, NewYaw, 0.0f);
+
+    if (bShouldPrintToLog) {
+        UE_LOG(MovementLogs, Display, TEXT("Output Rotation: %s"), *ReturnRotator.ToCompactString());
+        RunningLoggingTime -= LoggingInterval;
+
+        UE_LOG(MovementLogs, Display, TEXT("---------------------------"));
+    }
+
+    return ReturnRotator;
+}
+
+void UUnitNavMovementComponent::PushRotator(FRotator& inRotator)
+{
+    if (GetWorld()) {
+
+        AGameStateBase* TempGame;
+        TempGame = GetWorld()->GetGameState();
+        if (TempGame) {
+            ARTSGameState* GameState = Cast<ARTSGameState, AGameStateBase>(TempGame);
+            GameState->SetRotator(inRotator);
+        }
+    }
 }

@@ -24,8 +24,8 @@ void UCameraControllerComponent::SetControlInputs(UInputComponent* InputComponen
     InputComponent->BindAxis("MapLeft", this, &UCameraControllerComponent::AddLateralMapInput);
     InputComponent->BindAxis("MapUp", this, &UCameraControllerComponent::AddVerticalMapInput);
 
-    InputComponent->BindAction("ToggleYaw", IE_Pressed, this, &UCameraControllerComponent::ToggleYawAllowed);   
-    InputComponent->BindAction("ToggleYaw", IE_Released, this, &UCameraControllerComponent::ToggleYawAllowed);
+    InputComponent->BindAction("RightMouse", IE_Pressed, this, &UCameraControllerComponent::ToggleYawAllowed);   
+    InputComponent->BindAction("RightMouse", IE_Released, this, &UCameraControllerComponent::ToggleYawAllowed);
     InputComponent->BindAction( "Test", IE_Pressed, this, &UCameraControllerComponent::Speak);
     InputComponent->BindAxis("YawSpringArm", this, &UCameraControllerComponent::HandleLateralMouse);
     InputComponent->BindAxis("PitchSpringArm", this, &UCameraControllerComponent::HandleVerticalMouse);

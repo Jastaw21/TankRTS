@@ -2,10 +2,9 @@
 
 // this
 #include "Core/Controller/MyPlayerController.h"
+
 // UE includes
-#include "AIController.h"
 #include "Blueprint/UserWidget.h"
-#include "GameFramework/HUD.h"
 
 // camera widget, and movement
 #include "TankRTS/Public/Core/Camera/CameraWidget.h"
@@ -16,29 +15,28 @@
 #include "TankRTS/Public/Core/Controller/Components/CameraControllerComponent.h"
 
 // other TankRTS classes
-#include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "TankRTS/Public/Core/AI/UnitAIControllerBase.h"
-#include "TankRTS/Public/Core/UI/HUD/HUDControllerInterface.h"
 #include "TankRTS/Public/Core/UI/HUD/TankRTSHud.h"
 #include "TankRTS/Public/Core/UI/Widgets/SelectionUIWidget.h"
-#include "TankRTS/Public/Core/Units/Base/UnitBase.h"
 
 // stuff that happens early
 AMyPlayerController::AMyPlayerController()
 {
-
     // deal with the mouse stuff
     bShowMouseCursor = true;
     DefaultMouseCursor = EMouseCursor::Crosshairs;
     bEnableClickEvents = true;
     bEnableMouseOverEvents = true;
+
     // cache a ptr to the Camera Widget to make life easier
     APawn* ControlledPawnTemp = GetPawn();
     ControlledCameraWidget = Cast<ATankWidget, APawn>(ControlledPawnTemp);
 
+    // set up the subcomponent that just looks after the camera controls
     CameraControllerComponent = CreateDefaultSubobject<UCameraControllerComponent>(TEXT("Camera Controller"));
+    // pass it some ptrs to stuff
     CameraControllerComponent->GetComponents(ControlledCameraWidget, this);
 
+    // set up the subcomponent that will handle selecting and ordering of units
     UnitCommanderComponent = CreateDefaultSubobject<UUnitCommanderComponent>(TEXT("Unit Controls"));
 
     DefaultClickTraceChannel = ECollisionChannel::ECC_GameTraceChannel2;
@@ -46,15 +44,8 @@ AMyPlayerController::AMyPlayerController()
 void AMyPlayerController::SetupInputComponent()
 { // set up gameplay key bindings
     Super::SetupInputComponent();
-
-    // mouse movements
-    InputComponent->BindAxis("YawSpringArm", this, &AMyPlayerController::UpdateMouseXY);
-    InputComponent->BindAxis("PitchSpringArm", this, &AMyPlayerController::UpdateMouseXY);
-
-    // toggle the marquee selection
-    InputComponent->BindAction("ToggleMarquee", EInputEvent::IE_Pressed, this, &AMyPlayerController::ToggleMarqueeOn);
-    InputComponent->BindAction("ToggleMarquee", EInputEvent::IE_Released, this, &AMyPlayerController::ToggleMarqueeOff);
 }
+
 void AMyPlayerController::BeginPlay()
 {
     Super::BeginPlay();
@@ -80,40 +71,6 @@ void AMyPlayerController::BeginPlay()
         check(PlayerUI);
         PlayerUI->AddToPlayerScreen();
     }
-}
-
-void AMyPlayerController::UpdateMouseXY(float Value)
-{
-    if (IsMouseHeld) {
-        GetMousePosition(MouseEnd.X, MouseEnd.Y);
-        StartRectangleDrawing();
-    }
-}
-void AMyPlayerController::TrackMousePosition()
-{
-
-    if (!IsMouseHeld) {
-        IsMouseHeld = true;
-        GetMousePosition(MouseStart.X, MouseStart.Y);
-        GetMousePosition(MouseEnd.X, MouseEnd.Y);
-    }
-
-    else {
-        GetMousePosition(MouseEnd.X, MouseEnd.Y);
-    }
-
-    StartRectangleDrawing();
-}
-
-// communicate with the HUD to start/end selecting
-void AMyPlayerController::StartRectangleDrawing()
-{
-    GetHUDCasted()->AskToDrawRect(MouseStart.X, MouseStart.Y, MouseEnd.X, MouseEnd.Y, this);
-}
-void AMyPlayerController::EndRectangleDrawing()
-{
-    IsMouseHeld = false;
-    GetHUDCasted()->StopDrawingRect();
 }
 
 void AMyPlayerController::NotifyUnitsAreSelected()

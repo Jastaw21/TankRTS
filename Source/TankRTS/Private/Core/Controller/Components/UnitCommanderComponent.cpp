@@ -55,6 +55,11 @@ void UUnitCommanderComponent::SetControlInputs(UInputComponent* InputComponent)
     InputComponent->BindAction("Click", IE_Pressed, this, &UUnitCommanderComponent::PollAreaUnderCursor);
     InputComponent->BindAction("Click", IE_DoubleClick, this, &UUnitCommanderComponent::GetUnitDestination);
     InputComponent->BindAction("QPressed", IE_Released, this, &UUnitCommanderComponent::DropAllSelectedUnits);
+
+    InputComponent->BindAction("LeftShift", IE_Pressed, this, &UUnitCommanderComponent::StartRectangleDrawing);
+    InputComponent->BindAction("LeftShift", IE_Released, this, &UUnitCommanderComponent::EndRectangleDrawing);
+
+    InputComponent->BindAxis("MouseX", this, &UUnitCommanderComponent::UpdateMousePositions);
 }
 
 // used to see if theres a unit under the cursor
@@ -119,6 +124,36 @@ void UUnitCommanderComponent::DropAllSelectedUnits()
     if (Parent->GetSelectionUIWidget()) {
         Parent->GetSelectionUIWidget()->ResetNumUnitsSelected();
     }
+}
+
+void UUnitCommanderComponent::DrawHUDSelectionMarquee()
+{
+    GetHUDCasted()->AskToDrawRect(MouseStart.X, MouseStart.Y, MouseEnd.X, MouseEnd.Y, Parent);
+}
+
+void UUnitCommanderComponent::UpdateMousePositions(float Value)
+{
+    if (bIsSelectionBoxBeingDrawn) {
+        Parent->GetMousePosition(MouseEnd.X, MouseEnd.Y);
+        DrawHUDSelectionMarquee();
+    }
+}
+
+void UUnitCommanderComponent::StartRectangleDrawing()
+{
+    bIsSelectionBoxBeingDrawn = true;
+    if (Parent)
+    {
+        Parent->GetMousePosition(MouseStart.X, MouseStart.Y);
+        Parent->GetMousePosition(MouseEnd.X, MouseEnd.Y);
+    }
+}
+
+void UUnitCommanderComponent::EndRectangleDrawing()
+{
+    bIsSelectionBoxBeingDrawn = false;
+    Parent->GetMousePosition(MouseEnd.X, MouseEnd.Y);
+    GetHUDCasted()->StopDrawingRect();
 }
 
 // internal helper

@@ -2,11 +2,3 @@
 
 
 #include "Core/Interactables/Interfaces/ControllerInteractableInterface.h"
-
-ControllerInteractableInterface::ControllerInteractableInterface()
-{
-}
-
-ControllerInteractableInterface::~ControllerInteractableInterface()
-{
-}

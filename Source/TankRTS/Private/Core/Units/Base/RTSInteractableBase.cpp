@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Core/Units/Base/RTSInteractableBase.h"
-#include "Core/Interactables/InteractableDetails.h"
+#include "Components/CapsuleComponent.h"
+
+DEFINE_LOG_CATEGORY(RTSInteractables)
 
 // Sets default values
 ARTSInteractableBase::ARTSInteractableBase()
@@ -9,10 +11,17 @@ ARTSInteractableBase::ARTSInteractableBase()
     // Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
 
-    SelectionDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("Selected Decal"));
-    SelectionDecal->SetVisibility( false );
+    CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision Capsule"));
+    SetRootComponent(CapsuleComponent);
 
-    UIThumbnail = CreateDefaultSubobject<UTexture2D>( TEXT( "UI Thumbnail" ) );
+    SelectionDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("Selected Decal"));
+    SelectionDecal->SetVisibility(false);
+    SelectionDecal->SetupAttachment(RootComponent);
+
+    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+    Mesh->SetupAttachment(RootComponent);
+
+    UIThumbnail = CreateDefaultSubobject<UTexture2D>(TEXT("UI Thumbnail"));
 }
 
 // Called when the game starts or when spawned
@@ -38,3 +47,22 @@ FString* ARTSInteractableBase::GetGameplayName()
     return &InteractableDetails.GamePlayName;
 }
 
+InteractableType ARTSInteractableBase::GetInteractableType()
+{
+    return InteractableDetails.Interact_Type;
+}
+
+void ARTSInteractableBase::Speak()
+{
+    UE_LOG(RTSInteractables, Display, TEXT("Interactable, gp name: %s, speaking"), GetGameplayName());
+}
+
+ARTSInteractableBase* ARTSInteractableBase::OnClickedRTS()
+{
+    return nullptr;
+}
+
+ARTSInteractableBase* ARTSInteractableBase::OnDroppedRTS()
+{
+    return nullptr;
+}

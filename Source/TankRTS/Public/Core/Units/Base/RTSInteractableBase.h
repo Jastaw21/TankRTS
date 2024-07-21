@@ -3,12 +3,16 @@
 #pragma once
 
 #include "Components/DecalComponent.h"
+#include "Core/Interactables/InteractableDetails.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 
 #include "RTSInteractableBase.generated.h"
 
-struct FInteractableDetails;
+
+DECLARE_LOG_CATEGORY_EXTERN(RTSInteractables, Display, All);
+
+class UCapsuleComponent;
 
 UCLASS()
 class TANKRTS_API ARTSInteractableBase : public APawn {
@@ -40,13 +44,25 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable Details");
     FInteractableDetails InteractableDetails;
 
-    // access functions for the above
-    FString* GetGameplayName();
-
     // all interactables will have a decal shown when selected
     UPROPERTY(EditAnywhere, Category = "Selection")
     UDecalComponent* SelectionDecal;
 
+    UPROPERTY(EditAnywhere, Category = "Selection")
     // and a thumbnail to show on the UI
     UTexture2D* UIThumbnail;
+
+    UPROPERTY(EditAnywhere, Category = "Mesh")
+    UStaticMeshComponent* Mesh; // the main mesh
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<UCapsuleComponent> CapsuleComponent;
+
+    // access functions for the above
+    FString* GetGameplayName();
+    InteractableType GetInteractableType();
+
+    virtual void Speak();
+    virtual ARTSInteractableBase* OnClickedRTS();
+    virtual ARTSInteractableBase* OnDroppedRTS();
 };

@@ -56,15 +56,16 @@ public:
     float LoggingInterval = 2.0f;
 
 private:
-    AUnitBase* OwningUnit;
-
-    FVector CachedVelocity;
-    FRotator CachedRotator;
+    AUnitBase* OwningUnit;    
 
     FVector GetNewVelocity(float DeltaTime);
     FRotator GetNewRotator(float DeltaTime);
-
     void PushRotator(FRotator& inRotator);
+    FVector GetNewVelocityOnAccel(float DeltaTime);
 
     float RunningLoggingTime { 0.0f };
+    FVector CachedVelocity;
+
+
+
 };

@@ -50,13 +50,7 @@ public:
     UTexture2D* UIThumbnail;
 
     UPROPERTY( EditAnywhere, BlueprintReadWrite )
-    TObjectPtr<UCapsuleComponent> CapsuleComponent;
-
-
-    UPROPERTY(EditAnywhere)
-    float RotationSpeed { 200.0f };
-    UPROPERTY(EditAnywhere)
-    float RotationTolerance { 5.0f };    
+    TObjectPtr<UCapsuleComponent> CapsuleComponent;   
 
     // unit<->controller interface implementations
     virtual AUnitBase* SelectUnit_Implementation() override;

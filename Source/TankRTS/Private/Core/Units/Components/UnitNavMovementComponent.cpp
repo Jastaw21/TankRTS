@@ -29,8 +29,8 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
         FHitResult HitRes;
         SafeMoveUpdatedComponent(GetNewVelocity(DeltaTime), GetNewRotator(DeltaTime), bSweepRTS, HitRes);
 
-        CachedVelocity = GetNewVelocity(DeltaTime);
-        CachedRotator = GetNewRotator(DeltaTime);
+       // CachedVelocity = GetNewVelocity(DeltaTime);
+    // CachedRotator = GetNewRotator(DeltaTime);
     }
 }
 
@@ -108,3 +108,20 @@ void UUnitNavMovementComponent::PushRotator(FRotator& inRotator)
         }
     }
 }
+
+FVector UUnitNavMovementComponent::GetNewVelocityOnAccel(float DeltaTime){
+
+    // v = u+ at
+    float u = CachedVelocity.Length(); // original speed  
+
+    float RawNewSpeed = u + (UnitAcceleration* DeltaTime);
+    float ClampedNewSpeed = FMath::Clamp(RawNewSpeed, -UnitMaxSpeed, UnitMaxSpeed);
+
+    FVector RequestedVelocity = Velocity;
+    FVector NormalisedRequestedVelocity RequestedVelocity.GetSafeNormal();  
+    
+    return ClampedNewSpeed * NormalisedRequestedVelocity;
+
+}
+
+

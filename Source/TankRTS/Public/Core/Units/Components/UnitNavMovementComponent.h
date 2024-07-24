@@ -60,8 +60,12 @@ private:
 
     FVector GetNewVelocity(float DeltaTime);
     FRotator GetNewRotator(float DeltaTime);
-
     void PushRotator(FRotator& inRotator);
+    FVector GetNewVelocityOnAccel(float DeltaTime);
 
     float RunningLoggingTime { 0.0f };
+    FVector CachedVelocity;
+
+
+
 };

@@ -4,6 +4,7 @@
 
 #include "Components/DecalComponent.h"
 #include "Core/Interactables/InteractableDetails.h"
+#include "Core/Interactables/Interfaces/ControllerInteractableInterface.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 
@@ -15,7 +16,7 @@ DECLARE_LOG_CATEGORY_EXTERN(RTSInteractables, Display, All);
 class UCapsuleComponent;
 
 UCLASS()
-class TANKRTS_API ARTSInteractableBase : public APawn {
+class TANKRTS_API ARTSInteractableBase : public APawn, public IContInter{
     GENERATED_BODY()
 
     /*

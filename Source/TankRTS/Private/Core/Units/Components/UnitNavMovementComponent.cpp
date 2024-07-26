@@ -39,11 +39,30 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
     else {
 
+        if (!bHasStartedLastLeg) {
+
+            if (OnLastLeg()) {
+                RotationOnStartingLastLeg = GetNewRotator(DeltaTime);
+                bHasStartedLastLeg = true;
+            }
+        }
+
+        FVector DesiredNewVelocity = GetNewVelocityOnAccel(DeltaTime);
+        FRotator NewRotation;
+
+        if (DesiredNewVelocity == FVector::ZeroVector) {
+            NewRotation = RotationOnStartingLastLeg;
+            ResetCachedRotationIfRequired(DeltaTime);
+        }
+
+        else {
+
+            NewRotation = bIsOnLastLeg ? RotationOnStartingLastLeg : GetNewRotator(DeltaTime);
+        }
+
         FHitResult HitRes;
-
-        SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), bSweepRTS, HitRes);
-
-        CachedVelocity = GetNewVelocityOnAccel(DeltaTime);
+        SafeMoveUpdatedComponent(DesiredNewVelocity, NewRotation, bSweepRTS, HitRes);
+        CachedVelocity = DesiredNewVelocity;
     }
 }
 
@@ -59,6 +78,32 @@ bool UUnitNavMovementComponent::ShouldBrake(float DeltaTime)
 
     // include the "near side" of the acceptance radius
     return StoppingDistance >= (GetRemainingPathLength() - GetAcceptanceRadius());
+}
+
+bool UUnitNavMovementComponent::OnLastLeg()
+{
+    AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());
+    if (IsValid(Controller)) {
+        UPathFollowingComponent* PFComponent = Controller->GetPathFollowingComponent();
+        if (PFComponent != nullptr && PFComponent->HasValidPath()) {
+            const FNavPathSharedPtr PathToFollow = PFComponent->GetPath();
+
+            int NextPointIndex = PFComponent->GetNextPathIndex();
+            FNavPathPoint& LastPoint = PathToFollow->GetPathPoints().Last(0);
+            return LastPoint.Location == PathToFollow->GetPathPoints()[NextPointIndex].Location;
+        }
+    }
+
+    return false;
+}
+
+void UUnitNavMovementComponent::ResetCachedRotationIfRequired(float DeltaTime, float VelocityTolerance)
+{
+    if (FMath::Abs(GetNewVelocityOnAccel(DeltaTime).Size()) == 0.0f) {
+
+        bIsOnLastLeg = false;
+        bHasStartedLastLeg = false;
+    }
 }
 
 // simple constant speed velocity - deprecated
@@ -124,21 +169,21 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
 FVector UUnitNavMovementComponent::GetNewVelocityOnAccel(float DeltaTime)
 {
 
-   bool bShouldBrake = ShouldBrake( DeltaTime );
+    bool bShouldBrake = ShouldBrake(DeltaTime);
 
-   /*
-   In form of V = U + AT
-   V = RawNewSpeed
-   U = Cached Velocity
-   A = UnitAcceleration
-   T = Delta Time
-   */  
-    float RawNewSpeed = CachedVelocity.Length() + (UnitAcceleration * DeltaTime * bShouldBrake ? -1.0f : 1.0f );
+    /*
+    In form of V = U + AT
+    V = RawNewSpeed
+    U = Cached Velocity
+    A = UnitAcceleration
+    T = Delta Time
+    */
+    float RawNewSpeed = CachedVelocity.Length() + (UnitAcceleration * DeltaTime * bShouldBrake ? -1.0f : 1.0f);
 
     // so far we just have raw accel - so clamp it to the MaxUnitSpeed.
     float ClampedNewSpeed = FMath::Clamp(RawNewSpeed, -MaxUnitSpeed, MaxUnitSpeed);
 
-   // get the AI commanded velocity, turn it into a pure question of direction
+    // get the AI commanded velocity, turn it into a pure question of direction
     FVector NormalisedRequestedVelocity = Velocity.GetSafeNormal();
 
     // scale that raw direction vector, by the new sped
@@ -157,14 +202,11 @@ void UUnitNavMovementComponent::PushRotator(FRotator& inRotator)
     }
 }
 
-
 // code cleaning up functions - pulls out all the "IsValid" checks, and branching from the ShouldBrake() func
 float UUnitNavMovementComponent::GetRemainingPathLength()
 {
     AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());
     if (IsValid(Controller)) {
-
-        Controller->GetPathFollowingComponent()->GetAcceptanceRadius();
 
         UPathFollowingComponent* PFComponent = Controller->GetPathFollowingComponent();
 

@@ -61,7 +61,7 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
         }
 
         FHitResult HitRes;
-        SafeMoveUpdatedComponent(DesiredNewVelocity, NewRotation, bSweepRTS, HitRes);
+        SafeMoveUpdatedComponent(DesiredNewVelocity, NewRotation, true, HitRes);
         CachedVelocity = DesiredNewVelocity;
     }
 }

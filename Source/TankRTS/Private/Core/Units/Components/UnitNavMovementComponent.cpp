@@ -38,19 +38,30 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
     }
 
     else {
+
         FHitResult HitRes;
+
         SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), bSweepRTS, HitRes);
+
         CachedVelocity = GetNewVelocityOnAccel(DeltaTime);
-
-        float PathLen = GetRemainingPathLength();
-
-        if (PathLen > 0.0f) {
-            UE_LOG(LogTemp, Display, TEXT("PATH LENGTH %f:"), PathLen);
-        }
     }
 }
 
 // helpers to extract calcs from the TickComponent function.
+
+// returns true if we're inside the min distance required to deccelerate to a stop, based on the remaining AI path length
+bool UUnitNavMovementComponent::ShouldBrake(float DeltaTime)
+{
+    FVector CurrentVelocity = CachedVelocity;
+    float CurrentSpeed = CurrentVelocity.Size();
+    // suvat equations
+    float StoppingDistance = FMath::Pow(CurrentSpeed, 2) / (2 * FMath::Abs(UnitAcceleration));
+
+    // include the "near side" of the acceptance radius
+    return StoppingDistance >= (GetRemainingPathLength() - GetAcceptanceRadius());
+}
+
+// simple constant speed velocity - deprecated
 FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
 {
     return Velocity.GetSafeNormal() * DeltaTime * MovementSpeed;
@@ -113,15 +124,24 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
 FVector UUnitNavMovementComponent::GetNewVelocityOnAccel(float DeltaTime)
 {
 
-    // v = u+ at
-    float u = CachedVelocity.Length(); // original speed
+   bool bShouldBrake = ShouldBrake( DeltaTime );
 
-    float RawNewSpeed = u + (UnitAcceleration * DeltaTime);
+   /*
+   In form of V = U + AT
+   V = RawNewSpeed
+   U = Cached Velocity
+   A = UnitAcceleration
+   T = Delta Time
+   */  
+    float RawNewSpeed = CachedVelocity.Length() + (UnitAcceleration * DeltaTime * bShouldBrake ? -1.0f : 1.0f );
+
+    // so far we just have raw accel - so clamp it to the MaxUnitSpeed.
     float ClampedNewSpeed = FMath::Clamp(RawNewSpeed, -MaxUnitSpeed, MaxUnitSpeed);
 
-    FVector RequestedVelocity = Velocity;
-    FVector NormalisedRequestedVelocity = RequestedVelocity.GetSafeNormal();
+   // get the AI commanded velocity, turn it into a pure question of direction
+    FVector NormalisedRequestedVelocity = Velocity.GetSafeNormal();
 
+    // scale that raw direction vector, by the new sped
     return ClampedNewSpeed * NormalisedRequestedVelocity;
 }
 
@@ -137,20 +157,42 @@ void UUnitNavMovementComponent::PushRotator(FRotator& inRotator)
     }
 }
 
+
+// code cleaning up functions - pulls out all the "IsValid" checks, and branching from the ShouldBrake() func
 float UUnitNavMovementComponent::GetRemainingPathLength()
 {
-    AAIController* AIController = Cast<AAIController, AController>(OwningUnit->GetController());
-    if (IsValid(AIController)) {
+    AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());
+    if (IsValid(Controller)) {
 
-        UPathFollowingComponent* PathFollowingaaComp = AIController->GetPathFollowingComponent();
+        Controller->GetPathFollowingComponent()->GetAcceptanceRadius();
 
-        if (PathFollowingaaComp != nullptr && PathFollowingaaComp->HasValidPath()) {
-            const FNavPathSharedPtr PathToFollow = PathFollowingaaComp->GetPath();
-            //UE_LOG(LogTemp, Display, TEXT("Current Index: %d"), PathFollowingaaComp->GetCurrentPathIndex());
+        UPathFollowingComponent* PFComponent = Controller->GetPathFollowingComponent();
+
+        if (PFComponent != nullptr && PFComponent->HasValidPath()) {
+
+            const FNavPathSharedPtr PathToFollow = PFComponent->GetPath();
+
             FVector RawActorPosition = OwningUnit->GetActorLocation();
-            FNavPathPoint NextPoint = PathToFollow->GetPathPoints()[PathFollowingaaComp->GetNextPathIndex()];
-            FVector ZEqualisedActorPosition{RawActorPosition.X, RawActorPosition.Y, NextPoint.Location.Z};
-            return PathToFollow->GetLengthFromPosition( ZEqualisedActorPosition, PathFollowingaaComp->GetNextPathIndex());
+            FNavPathPoint NextPoint = PathToFollow->GetPathPoints()[PFComponent->GetNextPathIndex()];
+            FVector ZEqualisedActorPosition { RawActorPosition.X, RawActorPosition.Y, NextPoint.Location.Z };
+
+            return PathToFollow->GetLengthFromPosition(
+                ZEqualisedActorPosition, PFComponent->GetNextPathIndex());
+        }
+    }
+
+    return -1.0f;
+}
+float UUnitNavMovementComponent::GetAcceptanceRadius()
+{
+    AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());
+    if (IsValid(Controller)) {
+
+        UPathFollowingComponent* PFComponent = Controller->GetPathFollowingComponent();
+
+        if (PFComponent != nullptr && PFComponent->HasValidPath()) {
+
+            return Controller->GetPathFollowingComponent()->GetAcceptanceRadius();
         }
     }
 

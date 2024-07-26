@@ -85,6 +85,8 @@ private:
 
     // dev function
     float GetRemainingPathLength();
+    float GetAcceptanceRadius();
+    bool ShouldBrake( float DeltaTime );
 
     // used for logging
     float RunningLoggingTime { 0.0f };

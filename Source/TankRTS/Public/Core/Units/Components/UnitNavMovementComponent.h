@@ -34,15 +34,13 @@ public:
     BASIC MOVEMENT VARS
     */
 
-    // Basic Movement Speed
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Movement Parameters")
-    float MovementSpeed = 400.0f;
+  
     // Top Speed - to be used in the acceleration scenario
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Movement Parameters")
-    float MaxUnitSpeed = 20.0f;
+    float MaxUnitSpeed = 12.0f;
     // How fast we can accelerate
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Movement Parameters")
-    float UnitAcceleration = 5.0f;
+    float UnitAcceleration = 0.2f;
     // just added for testing purposes - so we can toggle sweep on and off
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Movement Parameters")
     bool bSweepRTS = false;
@@ -53,7 +51,7 @@ public:
 
     // Maximum Rotation Speed
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Variables")
-    float RotationSpeed = 2.0f;
+    float RotationSpeed = 360.0f;
     // Number of degrees acceptable to complete rotation
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Variables")
     float RotationTolerance = 0.1f;
@@ -73,8 +71,7 @@ private:
     // cached, casted pointer to the parent unit
     AUnitBase* OwningUnit;
 
-    // helpers for the "tick" event
-    FVector GetNewVelocity(float DeltaTime);
+    // helpers for the "tick" event    
     FRotator GetNewRotator(float DeltaTime);
     FVector GetNewVelocityOnAccel(float DeltaTime);
 
@@ -84,6 +81,7 @@ private:
     // Functions to clean up the GetNewVelocity func
     float GetRemainingPathLength();
     float GetAcceptanceRadius();
+    FRotator GetAICommandedRotation();
     bool ShouldBrake(float DeltaTime);
 
     // check if we're on the last leg. Called every frame if not already set to true

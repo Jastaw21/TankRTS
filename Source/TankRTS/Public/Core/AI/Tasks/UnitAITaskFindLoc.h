@@ -24,5 +24,5 @@ private:
     virtual FString GetStaticDescription() const override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Search", meta = (AllowPrivateAccess = true))
-    float SearchRadius { 900.0f };
+    float SearchRadius { 10.0f };
 };

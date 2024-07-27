@@ -39,30 +39,9 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
     else {
 
-        if (!bHasStartedLastLeg) {
-
-            if (OnLastLeg()) {
-                RotationOnStartingLastLeg = GetNewRotator(DeltaTime);
-                bHasStartedLastLeg = true;
-            }
-        }
-
-        FVector DesiredNewVelocity = GetNewVelocityOnAccel(DeltaTime);
-        FRotator NewRotation;
-
-        if (DesiredNewVelocity == FVector::ZeroVector) {
-            NewRotation = RotationOnStartingLastLeg;
-            ResetCachedRotationIfRequired(DeltaTime);
-        }
-
-        else {
-
-            NewRotation = bIsOnLastLeg ? RotationOnStartingLastLeg : GetNewRotator(DeltaTime);
-        }
-
         FHitResult HitRes;
-        SafeMoveUpdatedComponent(DesiredNewVelocity, NewRotation, true, HitRes);
-        CachedVelocity = DesiredNewVelocity;
+        SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), true, HitRes);
+        CachedVelocity = GetNewVelocityOnAccel(DeltaTime);
     }
 }
 
@@ -106,11 +85,7 @@ void UUnitNavMovementComponent::ResetCachedRotationIfRequired(float DeltaTime, f
     }
 }
 
-// simple constant speed velocity - deprecated
-FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
-{
-    return Velocity.GetSafeNormal() * DeltaTime * MovementSpeed;
-}
+
 FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
 {
     // control loggin behaviour
@@ -118,7 +93,7 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
     bool bShouldPrintToLog = (bLoggingEnabled && RunningLoggingTime >= LoggingInterval);
 
     // what is the change in desired rotation
-    FRotator DeltaRot = GetNewVelocity(DeltaTime).Rotation() - PawnOwner->GetActorRotation();
+    FRotator DeltaRot = GetAICommandedRotation() - PawnOwner->GetActorRotation();
 
     // if we're within the rotation tolerance - early out
     if (DeltaRot.IsNearlyZero(RotationTolerance)) {
@@ -239,4 +214,15 @@ float UUnitNavMovementComponent::GetAcceptanceRadius()
     }
 
     return -1.0f;
+}
+
+FRotator UUnitNavMovementComponent::GetAICommandedRotation()
+{
+    AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());
+    if (IsValid(Controller)) {
+
+        return Controller->GetDesiredRotation();
+    }
+
+    return FRotator::ZeroRotator;
 }

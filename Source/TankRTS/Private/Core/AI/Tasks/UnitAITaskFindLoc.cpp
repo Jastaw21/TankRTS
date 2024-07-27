@@ -39,8 +39,9 @@ EBTNodeResult::Type UUnitAITaskFindLoc::ExecuteTask(UBehaviorTreeComponent& Owne
             const UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 
             if (IsValid(NavSystem) && NavSystem->GetRandomPointInNavigableRadius(Origin, SearchRadius, Location)) {
+               
                 AIController->GetBlackboardComponent()->SetValueAsVector(BlackboardKey.SelectedKeyName, Location.Location);
-            }       
+                            }       
 
             FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
             return EBTNodeResult::Succeeded;

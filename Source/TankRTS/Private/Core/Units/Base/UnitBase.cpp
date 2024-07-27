@@ -24,10 +24,6 @@ AUnitBase::AUnitBase()
 
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 
-    Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-    Mesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-    Mesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_GameTraceChannel2, ECollisionResponse::ECR_Block);
-    Mesh->SetCollisionProfileName("Unitss");
     Mesh->bReceivesDecals = false;
 
     Mesh->SetupAttachment(GetRootComponent());

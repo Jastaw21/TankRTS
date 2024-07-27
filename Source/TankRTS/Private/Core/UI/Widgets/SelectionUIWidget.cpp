@@ -11,6 +11,12 @@ void USelectionUIWidget::ResetNumUnitsSelected()
     TextToShow = "";
 }
 
+void USelectionUIWidget::AddNumSelectedUnits(int NumToAdd)
+{
+    NumUnitsSelected += NumToAdd;
+    TextToShow = FString::FromInt(NumUnitsSelected);
+}
+
 void USelectionUIWidget::IncrementNumUnitsSelected()
 {
     NumUnitsSelected += 1;

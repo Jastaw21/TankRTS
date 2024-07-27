@@ -25,11 +25,12 @@ public:
 
     void IncrementNumUnitsSelected();
     void ResetNumUnitsSelected();
+    void AddNumSelectedUnits(int NumToAdd);
 
     UFUNCTION(BlueprintCallable)
     FString GetJWUnitsAsText();
 
-    UFUNCTION( BlueprintCallable )
+    UFUNCTION(BlueprintCallable)
     FString GetRotator();
 
     UFUNCTION(BlueprintCallable)

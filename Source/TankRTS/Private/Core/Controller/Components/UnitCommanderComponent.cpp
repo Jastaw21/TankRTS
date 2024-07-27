@@ -2,12 +2,11 @@
 
 #include "Core/Controller/Components/UnitCommanderComponent.h"
 #include "Core/Controller/MyPlayerController.h"
+#include "Core/Game Mode/RTSGameState.h"
 #include "Core/UI/Widgets/SelectionUIWidget.h"
 #include "Core/Units/Base/UnitBase.h"
 #include "GameFramework/HUD.h"
 #include "TankRTS/Public/Core/UI/HUD/TankRTSHud.h"
-#include "Core/Game Mode/RTSGameState.h"
-
 
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
@@ -96,12 +95,18 @@ void UUnitCommanderComponent::PollAreaUnderCursor()
 // handlers to be fired
 void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
 {
+
+    int PreviousElements = SubscribedUnits.Num();
+
     if (UnitToSelect->GetClass()->ImplementsInterface(UHUDController::StaticClass())) {
-        SubscribedUnits.Add(IHUDController::Execute_SelectUnit(UnitToSelect));
+
+        SubscribedUnits.AddUnique(IHUDController::Execute_SelectUnit(UnitToSelect));
     }
 
     if (Parent->GetSelectionUIWidget()) {
-        Parent->GetSelectionUIWidget()->IncrementNumUnitsSelected();
+
+        int NewElements = SubscribedUnits.Num() - PreviousElements;
+        Parent->GetSelectionUIWidget()->AddNumSelectedUnits(NewElements);
     }
 
     if (GetWorld()) {

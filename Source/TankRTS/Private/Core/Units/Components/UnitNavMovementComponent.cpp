@@ -43,6 +43,8 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
         SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), true, HitRes);
         CachedVelocity = GetNewVelocityOnAccel(DeltaTime);
     }
+
+    UAvoidanceManager
 }
 
 // helpers to extract calcs from the TickComponent function.

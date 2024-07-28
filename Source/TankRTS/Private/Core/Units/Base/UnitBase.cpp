@@ -2,7 +2,8 @@
 
 #include "TankRTS/Public/Core/Units/Base/UnitBase.h"
 #include "Components/BoxComponent.h"
-#include "Components/CapsuleComponent.h"
+
+#include "Components/BoxComponent.h"
 #include "Core/Units/Components/UnitNavMovementComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "TankRTS/Public/Core/AI/UnitAIControllerBase.h"
@@ -19,14 +20,12 @@ AUnitBase::AUnitBase()
     // Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
 
-    CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision Capsule"));
-    SetRootComponent(CapsuleComponent);
-
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+    SetRootComponent( Mesh );
+    Mesh->bReceivesDecals = false;    
 
-    Mesh->bReceivesDecals = false;
-
-    Mesh->SetupAttachment(GetRootComponent());
+    BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Capsule"));
+    BoxCollisionComponent->SetupAttachment(RootComponent);
 
     MovementComponent = CreateDefaultSubobject<UUnitNavMovementComponent>(TEXT("New Movement"));
     MovementComponent->SetUpdatedComponent(RootComponent);

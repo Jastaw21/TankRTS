@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Components/DecalComponent.h"
+
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "TankRTS/Public/Core/UI/HUD/HUDControllerInterface.h"
@@ -13,7 +14,7 @@
 
 
 class UUnitNavMovementComponent;
-class UCapsuleComponent;
+class UBoxComponent;
 
 UCLASS()
 class TANKRTS_API AUnitBase : public APawn, public IHUDController {
@@ -50,7 +51,7 @@ public:
     UTexture2D* UIThumbnail;
 
     UPROPERTY( EditAnywhere, BlueprintReadWrite )
-    TObjectPtr<UCapsuleComponent> CapsuleComponent;   
+    UBoxComponent* BoxCollisionComponent;   
 
     // unit<->controller interface implementations
     virtual AUnitBase* SelectUnit_Implementation() override;

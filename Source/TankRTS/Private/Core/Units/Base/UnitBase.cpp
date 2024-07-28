@@ -28,7 +28,7 @@ AUnitBase::AUnitBase()
     BoxCollisionComponent->SetupAttachment(RootComponent);
 
     MovementComponent = CreateDefaultSubobject<UUnitNavMovementComponent>(TEXT("New Movement"));
-    MovementComponent->SetUpdatedComponent(RootComponent);
+    MovementComponent->SetUpdatedComponent(RootComponent);    
 
     SelectionDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("Selected Decal"));
     SelectionDecal->SetupAttachment(RootComponent);

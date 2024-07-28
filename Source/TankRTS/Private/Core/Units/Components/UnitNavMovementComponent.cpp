@@ -40,8 +40,12 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
     else {
 
         FHitResult HitRes;
-        bool SafeMoved = SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), true,HitRes, ETeleportType::TeleportPhysics);
-        
+        bool SafeMoved = SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), true, HitRes, ETeleportType::TeleportPhysics);
+
+        if (HitRes.bBlockingHit) {
+            SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), false, HitRes, ETeleportType::TeleportPhysics);
+        }
+
         CachedVelocity = GetNewVelocityOnAccel(DeltaTime);
     }
 }
@@ -95,10 +99,9 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
     // what is the change in desired rotation - think this ignores pitch
     FRotator RawAICommandedRotation = GetAICommandedRotation();
     FRotator RawVelocRotation = Velocity.ToOrientationRotator();
-    FRotator BlendedRotation = FRotator( RawVelocRotation.Pitch, RawAICommandedRotation.Yaw, 0.0f );
-   
-    FRotator DeltaRot = BlendedRotation - PawnOwner->GetActorRotation();
+    FRotator BlendedRotation = FRotator(RawVelocRotation.Pitch, RawAICommandedRotation.Yaw, 0.0f);
 
+    FRotator DeltaRot = BlendedRotation - PawnOwner->GetActorRotation();
 
     // if we're within the rotation tolerance - early out
     if (DeltaRot.IsNearlyZero(RotationTolerance)) {

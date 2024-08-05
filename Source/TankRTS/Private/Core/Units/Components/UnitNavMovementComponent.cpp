@@ -3,6 +3,7 @@
 #include "Core/Units/Components/UnitNavMovementComponent.h"
 #include "Core/Game Mode/RTSGameState.h"
 #include "Core/Units/Base/UnitBase.h"
+#include "Core/Utility/JWMath.h"
 #include "GameFramework/GameState.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -39,14 +40,16 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
     else {
 
+        FVector Delta = GetNewVelocityOnAccel(DeltaTime);
         FHitResult HitRes;
-        bool SafeMoved = SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), true, HitRes, ETeleportType::TeleportPhysics);
+
+        bool SafeMoved = SafeMoveUpdatedComponent(Delta, GetNewRotator(DeltaTime), true, HitRes, ETeleportType::TeleportPhysics);
 
         if (HitRes.bBlockingHit) {
-            SafeMoveUpdatedComponent(GetNewVelocityOnAccel(DeltaTime), GetNewRotator(DeltaTime), false, HitRes, ETeleportType::TeleportPhysics);
+            SlideAlongSurface(Delta, DeltaTime, HitRes.ImpactNormal, HitRes);
         }
 
-        CachedVelocity = GetNewVelocityOnAccel(DeltaTime);
+        CachedVelocity = Delta;
     }
 }
 
@@ -91,63 +94,24 @@ void UUnitNavMovementComponent::ResetCachedRotationIfRequired(float DeltaTime, f
 }
 
 FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
-{
-    // control logging behaviour
-    RunningLoggingTime += DeltaTime;
-    bool bShouldPrintToLog = (bLoggingEnabled && RunningLoggingTime >= LoggingInterval);
-
+{  
     // what is the change in desired rotation - think this ignores pitch
     FRotator RawAICommandedRotation = GetAICommandedRotation();
     FRotator RawVelocRotation = Velocity.ToOrientationRotator();
-    FRotator BlendedRotation = FRotator(RawVelocRotation.Pitch, RawAICommandedRotation.Yaw, 0.0f);
+    FRotator BlendedRotation = FRotator( RawAICommandedRotation.Pitch, RawAICommandedRotation.Yaw, 0.0f);
 
     FRotator DeltaRot = BlendedRotation - PawnOwner->GetActorRotation();
-
+   
     // if we're within the rotation tolerance - early out
     if (DeltaRot.IsNearlyZero(RotationTolerance)) {
         return PawnOwner->GetActorRotation();
     }
 
-    // logging step 1
-    if (bShouldPrintToLog) {
-        UE_LOG(MovementLogs, Display, TEXT("Current Rotation: %s"), *PawnOwner->GetActorRotation().ToCompactString());
-        UE_LOG(MovementLogs, Display, TEXT("Desired Rotation: %s"), *Velocity.Rotation().ToCompactString());
-        UE_LOG(MovementLogs, Display, TEXT("Delta Rotation: %s"), *DeltaRot.ToCompactString());
-    }
+    JWMath::ScaleVectorToSpeed(DeltaRot, RotationSpeed * DeltaTime);
+    DeltaRot.Roll = 0.00f;
 
-    // how big is the required rotation in each axis
-    float PitchVar = DeltaRot.Pitch;
-    float YawVar = DeltaRot.Yaw;
-
-    // and then what percentage of the total magnitude does each axis provide
-    float AbsDesiredRotationScale = FMath::Abs(PitchVar) + FMath::Abs(YawVar);
-    float PitchScale = FMath::Abs(PitchVar) / AbsDesiredRotationScale;
-    float YawScale = FMath::Abs(YawVar) / AbsDesiredRotationScale;
-
-    // logging step 2
-    if (bShouldPrintToLog) {
-        UE_LOG(MovementLogs, Display, TEXT("Total Scale %f"), (PitchScale + YawScale));
-    }
-
-    // how long should the magnitude be?
-    float MaxRotation = RotationSpeed * DeltaTime;
-
-    // return each axis to the scaled place
-    float NewPitch = MaxRotation * PitchScale * FMath::Sign(PitchVar);
-    float NewYaw = MaxRotation * YawScale * FMath::Sign(YawVar);
-
-    // add the new calculated incremental rotation to the existing one
-    FRotator ReturnRotator = PawnOwner->GetActorRotation() + FRotator(NewPitch, NewYaw, 0.0f);
-
-    // final loggin step
-    if (bShouldPrintToLog) {
-        UE_LOG(MovementLogs, Display, TEXT("Output Rotation: %s"), *ReturnRotator.ToCompactString());
-        RunningLoggingTime -= LoggingInterval;
-
-        UE_LOG(MovementLogs, Display, TEXT("---------------------------"));
-    }
-
-    return ReturnRotator;
+    // add the new calculated incremental rotation to the existing one  
+    return PawnOwner->GetActorRotation()+DeltaRot;
 }
 FVector UUnitNavMovementComponent::GetNewVelocityOnAccel(float DeltaTime)
 {

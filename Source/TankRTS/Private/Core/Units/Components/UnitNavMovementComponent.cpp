@@ -40,13 +40,14 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
     else {
 
-        FVector Delta = GetNewVelocityOnAccel(DeltaTime);
+        FVector Delta = GetNewVelocity(DeltaTime);
+        FRotator NewRotation = GetNewRotator(DeltaTime);
         FHitResult HitRes;
 
-        bool SafeMoved = SafeMoveUpdatedComponent(Delta, GetNewRotator(DeltaTime), true, HitRes, ETeleportType::TeleportPhysics);
+        bool SafeMoved = SafeMoveUpdatedComponent(Delta, NewRotation, true, HitRes, ETeleportType::TeleportPhysics);
 
         if (HitRes.bBlockingHit) {
-            SlideAlongSurface(Delta, DeltaTime, HitRes.ImpactNormal, HitRes);
+            SlideAlongSurface(Delta, 1 - HitRes.Time, HitRes.ImpactNormal, HitRes);
         }
 
         CachedVelocity = Delta;
@@ -67,7 +68,7 @@ bool UUnitNavMovementComponent::ShouldBrake(float DeltaTime)
     return StoppingDistance >= (GetRemainingPathLength() - GetAcceptanceRadius());
 }
 
-bool UUnitNavMovementComponent::OnLastLeg()
+bool UUnitNavMovementComponent::ActorIsOnLastLeg()
 {
     AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());
     if (IsValid(Controller)) {
@@ -84,24 +85,51 @@ bool UUnitNavMovementComponent::OnLastLeg()
     return false;
 }
 
-void UUnitNavMovementComponent::ResetCachedRotationIfRequired(float DeltaTime, float VelocityTolerance)
+FRotator UUnitNavMovementComponent::LineTraceRTS(FVector& CurrentLocation_p, FVector& Velocity_p, float SecondsTilNextTick)
 {
-    if (FMath::Abs(GetNewVelocityOnAccel(DeltaTime).Size()) == 0.0f) {
+    FVector CurrentLocation = OwningUnit->GetActorLocation();
+    FVector NextLocation = GetLocationInXSeconds( CurrentLocation_p, Velocity_p, SecondsTilNextTick);
 
-        bIsOnLastLeg = false;
-        bHasStartedLastLeg = false;
+    FHitResult LineTraceResult;
+    GetWorld()->LineTraceSingleByChannel(LineTraceResult, NextLocation, NextLocation -= FVector(0.0f, 0.0f, -1000.0f), ECollisionChannel::ECC_WorldStatic);
+
+    if (LineTraceResult.bBlockingHit) {
+
+        FVector HitLocation = LineTraceResult.Location;
+
+        HitLocation *= FVector::ZAxisVector;
+
+        return (HitLocation - (CurrentLocation_p *= FVector::ZAxisVector)).ToOrientationRotator();
+    }
+
+    else {
+        return FRotator::ZeroRotator;
     }
 }
 
 FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
-{  
+{
+
+    LineTraceRunningTime += DeltaTime;
+
+    bool ShouldLineTrace = LineTraceRunningTime >= LineTraceInterval;
+    FRotator LineTracedRotator;
+
+    if (ShouldLineTrace) {
+        FVector CurrentLoc = OwningUnit->GetActorLocation();
+       
+        LineTraceRunningTime = 0.0f;
+
+        LineTracedRotator = LineTraceRTS(CurrentLoc, CachedVelocity, LineTraceInterval * 0.95f);
+    }
+
     // what is the change in desired rotation - think this ignores pitch
     FRotator RawAICommandedRotation = GetAICommandedRotation();
     FRotator RawVelocRotation = Velocity.ToOrientationRotator();
-    FRotator BlendedRotation = FRotator( RawAICommandedRotation.Pitch, RawAICommandedRotation.Yaw, 0.0f);
+    FRotator BlendedRotation = FRotator(RawAICommandedRotation.Pitch, RawAICommandedRotation.Yaw, 0.0f);
 
     FRotator DeltaRot = BlendedRotation - PawnOwner->GetActorRotation();
-   
+
     // if we're within the rotation tolerance - early out
     if (DeltaRot.IsNearlyZero(RotationTolerance)) {
         return PawnOwner->GetActorRotation();
@@ -110,10 +138,10 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
     JWMath::ScaleVectorToSpeed(DeltaRot, RotationSpeed * DeltaTime);
     DeltaRot.Roll = 0.00f;
 
-    // add the new calculated incremental rotation to the existing one  
-    return PawnOwner->GetActorRotation()+DeltaRot;
+    // add the new calculated incremental rotation to the existing one
+    return PawnOwner->GetActorRotation()+DeltaRot+ (ShouldLineTrace ? LineTracedRotator : FRotator::ZeroRotator);
 }
-FVector UUnitNavMovementComponent::GetNewVelocityOnAccel(float DeltaTime)
+FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
 {
 
     bool bShouldBrake = ShouldBrake(DeltaTime);
@@ -136,8 +164,11 @@ FVector UUnitNavMovementComponent::GetNewVelocityOnAccel(float DeltaTime)
     // scale that raw direction vector, by the new sped
     return ClampedNewSpeed * NormalisedRequestedVelocity;
 }
-
-void UUnitNavMovementComponent::PushRotator(FRotator& inRotator)
+FVector UUnitNavMovementComponent::GetLocationInXSeconds(FVector& CurrentLocation, FVector& Velocity_p, float XSeconds)
+{
+    return CurrentLocation +Velocity_p* XSeconds;
+}
+void UUnitNavMovementComponent::PushRotatorToUI(FRotator& inRotator)
 {
     if (GetWorld()) {
         AGameStateBase* TempGame;
@@ -187,7 +218,6 @@ float UUnitNavMovementComponent::GetAcceptanceRadius()
 
     return -1.0f;
 }
-
 FRotator UUnitNavMovementComponent::GetAICommandedRotation()
 {
     AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());

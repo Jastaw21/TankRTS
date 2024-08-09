@@ -62,10 +62,14 @@ public:
 
     // how often to print to logg
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
-    float LoggingInterval = 2.0f;
+    float LineTraceInterval = 2.0f;
     // toggle movement logging on/off
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     bool bLoggingEnabled = false;
+
+
+    UPROPERTY( EditAnywhere, BlueprintReadWrite, Category = "Rotation Variables")
+    float SecondsToLineTrace = 0.5f;
 
 private:
     // cached, casted pointer to the parent unit
@@ -73,10 +77,11 @@ private:
 
     // helpers for the "tick" event    
     FRotator GetNewRotator(float DeltaTime);
-    FVector GetNewVelocityOnAccel(float DeltaTime);
+    FVector GetNewVelocity(float DeltaTime);
+    FVector GetLocationInXSeconds( FVector& CurrentLocation, FVector& Velocity_p, float XSeconds );
 
     // push current rotator to the UI
-    void PushRotator(FRotator& inRotator);
+    void PushRotatorToUI(FRotator& inRotator);
 
     // Functions to clean up the GetNewVelocity func
     float GetRemainingPathLength();
@@ -85,11 +90,13 @@ private:
     bool ShouldBrake(float DeltaTime);
 
     // check if we're on the last leg. Called every frame if not already set to true
-    bool OnLastLeg();
-    void ResetCachedRotationIfRequired( float DeltaTime, float VelocityTolerance = 0.11f);
+    bool ActorIsOnLastLeg();
+
+    FRotator LineTraceRTS(FVector& CurrentLocation_p, FVector& Velocity_p, float SecondsTilNextTick);
+
     
     // used for logging
-    float RunningLoggingTime { 0.0f };
+    float LineTraceRunningTime { 0.0f };
     // used to calculate acceleration
     FVector CachedVelocity;
 

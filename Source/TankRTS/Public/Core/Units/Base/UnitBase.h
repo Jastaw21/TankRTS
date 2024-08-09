@@ -12,7 +12,6 @@
 // ..
 #include "UnitBase.generated.h"
 
-
 class UUnitNavMovementComponent;
 class UBoxComponent;
 
@@ -50,8 +49,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UTexture2D* UIThumbnail;
 
-    UPROPERTY( EditAnywhere, BlueprintReadWrite )
-    UBoxComponent* BoxCollisionComponent;   
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UBoxComponent* BoxCollisionComponent;
 
     // unit<->controller interface implementations
     virtual AUnitBase* SelectUnit_Implementation() override;
@@ -60,10 +59,14 @@ public:
 
     UUnitNavMovementComponent* GetNavMovement();
 
+    FORCEINLINE void SetIsUnitMoving(bool IsUnitMoving_p) { IsUnitMoving = IsUnitMoving_p; }
+    FORCEINLINE bool GetIsUnitMoving() { return IsUnitMoving; }
+
     DesiredUnitMovementDetails& GetMovementDetails();
     FORCEINLINE void CancelMovement() { MovementDetails.HasDesiredLocation = false; }
-    FORCEINLINE bool IsMoveable() { return MovementDetails.HasDesiredLocation; }
+    FORCEINLINE bool IsMoveable() const { return MovementDetails.HasDesiredLocation; }
 
 private:
     DesiredUnitMovementDetails MovementDetails;
+    bool IsUnitMoving = false;
 };

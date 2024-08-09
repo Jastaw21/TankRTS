@@ -33,8 +33,6 @@ public:
     /*
     BASIC MOVEMENT VARS
     */
-
-  
     // Top Speed - to be used in the acceleration scenario
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Basic Movement Parameters")
     float MaxUnitSpeed = 12.0f;
@@ -48,7 +46,6 @@ public:
     /*
     ROTATION VARIABLEs
      */
-
     // Maximum Rotation Speed
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Variables")
     float RotationSpeed = 360.0f;
@@ -59,26 +56,25 @@ public:
     /*
     LOGGING VARIABLEs
      */
-
     // how often to print to logg
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     float LineTraceInterval = 2.0f;
     // toggle movement logging on/off
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     bool bLoggingEnabled = false;
-
-
-    UPROPERTY( EditAnywhere, BlueprintReadWrite, Category = "Rotation Variables")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Variables")
     float SecondsToLineTrace = 0.5f;
+
+   
 
 private:
     // cached, casted pointer to the parent unit
     AUnitBase* OwningUnit;
 
-    // helpers for the "tick" event    
+    // helpers for the "tick" event
     FRotator GetNewRotator(float DeltaTime);
     FVector GetNewVelocity(float DeltaTime);
-    FVector GetLocationInXSeconds( FVector& CurrentLocation, FVector& Velocity_p, float XSeconds );
+    FVector GetLocationInXSeconds(FVector& CurrentLocation, FVector& Velocity_p, float XSeconds);
 
     // push current rotator to the UI
     void PushRotatorToUI(FRotator& inRotator);
@@ -94,7 +90,6 @@ private:
 
     FRotator LineTraceRTS(FVector& CurrentLocation_p, FVector& Velocity_p, float SecondsTilNextTick);
 
-    
     // used for logging
     float LineTraceRunningTime { 0.0f };
     // used to calculate acceleration
@@ -107,4 +102,5 @@ private:
     // idea being - when we first see this is true, archive the rotation - and don't change that until we restart movement - prevents returning back to (0,0,0)
     bool bIsOnLastLeg = false;
     bool bHasStartedLastLeg = false;
+    bool isUnitMoving = false;
 };

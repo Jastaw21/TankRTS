@@ -87,8 +87,11 @@ bool UUnitNavMovementComponent::ActorIsOnLastLeg()
 
 FRotator UUnitNavMovementComponent::LineTraceRTS(FVector& CurrentLocation_p, FVector& Velocity_p, float SecondsTilNextTick)
 {
+
+    // GEngine->AddOnScreenDebugMessage(12, 0.4f, FColor::Silver, TEXT("Line Tracing"));
+
     FVector CurrentLocation = OwningUnit->GetActorLocation();
-    FVector NextLocation = GetLocationInXSeconds( CurrentLocation_p, Velocity_p, SecondsTilNextTick);
+    FVector NextLocation = GetLocationInXSeconds(CurrentLocation_p, Velocity_p, SecondsTilNextTick);
 
     FHitResult LineTraceResult;
     GetWorld()->LineTraceSingleByChannel(LineTraceResult, NextLocation, NextLocation -= FVector(0.0f, 0.0f, -1000.0f), ECollisionChannel::ECC_WorldStatic);
@@ -98,11 +101,13 @@ FRotator UUnitNavMovementComponent::LineTraceRTS(FVector& CurrentLocation_p, FVe
         FVector HitLocation = LineTraceResult.Location;
 
         HitLocation *= FVector::ZAxisVector;
+        FRotator ReturnRotator = (HitLocation - (CurrentLocation_p *= FVector::ZAxisVector)).ToOrientationRotator();
 
-        return (HitLocation - (CurrentLocation_p *= FVector::ZAxisVector)).ToOrientationRotator();
-    }
+        GEngine->AddOnScreenDebugMessage(13, 0.4f, FColor::Blue, *ReturnRotator.ToString());
 
-    else {
+        return ReturnRotator;
+    } else {
+
         return FRotator::ZeroRotator;
     }
 }
@@ -117,7 +122,7 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
 
     if (ShouldLineTrace) {
         FVector CurrentLoc = OwningUnit->GetActorLocation();
-       
+
         LineTraceRunningTime = 0.0f;
 
         LineTracedRotator = LineTraceRTS(CurrentLoc, CachedVelocity, LineTraceInterval * 0.95f);
@@ -139,7 +144,7 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
     DeltaRot.Roll = 0.00f;
 
     // add the new calculated incremental rotation to the existing one
-    return PawnOwner->GetActorRotation()+DeltaRot+ (ShouldLineTrace ? LineTracedRotator : FRotator::ZeroRotator);
+    return PawnOwner->GetActorRotation() + DeltaRot + (ShouldLineTrace ? LineTracedRotator : FRotator::ZeroRotator);
 }
 FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
 {
@@ -163,21 +168,6 @@ FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
 
     // scale that raw direction vector, by the new sped
     return ClampedNewSpeed * NormalisedRequestedVelocity;
-}
-FVector UUnitNavMovementComponent::GetLocationInXSeconds(FVector& CurrentLocation, FVector& Velocity_p, float XSeconds)
-{
-    return CurrentLocation +Velocity_p* XSeconds;
-}
-void UUnitNavMovementComponent::PushRotatorToUI(FRotator& inRotator)
-{
-    if (GetWorld()) {
-        AGameStateBase* TempGame;
-        TempGame = GetWorld()->GetGameState();
-        if (TempGame) {
-            ARTSGameState* GameState = Cast<ARTSGameState, AGameStateBase>(TempGame);
-            GameState->SetRotator(inRotator);
-        }
-    }
 }
 
 // code cleaning up functions - pulls out all the "IsValid" checks, and branching from the ShouldBrake() func
@@ -227,4 +217,19 @@ FRotator UUnitNavMovementComponent::GetAICommandedRotation()
     }
 
     return FRotator::ZeroRotator;
+}
+FVector UUnitNavMovementComponent::GetLocationInXSeconds(FVector& CurrentLocation, FVector& Velocity_p, float XSeconds)
+{
+    return CurrentLocation + Velocity_p * XSeconds;
+}
+void UUnitNavMovementComponent::PushRotatorToUI(FRotator& inRotator)
+{
+    if (GetWorld()) {
+        AGameStateBase* TempGame;
+        TempGame = GetWorld()->GetGameState();
+        if (TempGame) {
+            ARTSGameState* GameState = Cast<ARTSGameState, AGameStateBase>(TempGame);
+            GameState->SetRotator(inRotator);
+        }
+    }
 }

@@ -28,10 +28,8 @@ EBTNodeResult::Type UUnitAITaskFindLoc::ExecuteTask(UBehaviorTreeComponent& Owne
     {
 
         // get a raw pawn ref
-        APawn* AIPawn { AIController->GetPawn() };        
+        APawn* AIPawn { AIController->GetPawn() };
         if (AIPawn) {
-
-          
 
             Origin = AIPawn->GetActorLocation();
             AUnitBase* Unit = Cast<AUnitBase, APawn>(AIPawn);
@@ -39,9 +37,12 @@ EBTNodeResult::Type UUnitAITaskFindLoc::ExecuteTask(UBehaviorTreeComponent& Owne
             const UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 
             if (IsValid(NavSystem) && NavSystem->GetRandomPointInNavigableRadius(Origin, SearchRadius, Location)) {
-               
+
                 AIController->GetBlackboardComponent()->SetValueAsVector(BlackboardKey.SelectedKeyName, Location.Location);
-                            }       
+               // Unit->SetIsUnitMoving( true );
+
+
+            }
 
             FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
             return EBTNodeResult::Succeeded;
@@ -54,7 +55,7 @@ EBTNodeResult::Type UUnitAITaskFindLoc::ExecuteTask(UBehaviorTreeComponent& Owne
         }
     }
 
-    else {       
+    else {
 
         FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
         return EBTNodeResult::Failed;

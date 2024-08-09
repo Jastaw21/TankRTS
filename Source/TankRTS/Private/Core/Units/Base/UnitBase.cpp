@@ -76,6 +76,7 @@ UUnitNavMovementComponent* AUnitBase::GetNavMovement()
     return MovementComponent;
 }
 
+
 // Called every frame
 void AUnitBase::Tick(float DeltaTime)
 {

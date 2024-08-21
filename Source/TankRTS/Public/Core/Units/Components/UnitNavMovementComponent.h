@@ -58,12 +58,13 @@ public:
      */
     // how often to print to logg
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
-    float LineTraceInterval = 2.0f;
+    float LineTraceInterval = 0.5f;
     // toggle movement logging on/off
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     bool bLoggingEnabled = false;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rotation Variables")
-    float SecondsToLineTrace = 0.5f;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Scanning")
+    float DistanceAheadToTrack = 200.0f;
 
    
 
@@ -72,9 +73,9 @@ private:
     AUnitBase* OwningUnit;
 
     // helpers for the "tick" event
-    FRotator GetNewRotator(float DeltaTime);
+    FRotator GetVelocityRotator(float DeltaTime);
     FVector GetNewVelocity(float DeltaTime);
-    FVector GetLocationInXSeconds(FVector& CurrentLocation, FVector& Velocity_p, float XSeconds);
+    
 
     // push current rotator to the UI
     void PushRotatorToUI(FRotator& inRotator);
@@ -88,7 +89,7 @@ private:
     // check if we're on the last leg. Called every frame if not already set to true
     bool ActorIsOnLastLeg();
 
-    FRotator LineTraceRTS(FVector& CurrentLocation_p, FVector& Velocity_p, float SecondsTilNextTick);
+    FRotator LineTraceXSecondsAhead(FVector& CurrentLocation_p,  float SecondsTilNextTick);
 
     // used for logging
     float LineTraceRunningTime { 0.0f };

@@ -121,7 +121,6 @@ void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
 
 void UUnitCommanderComponent::GetUnitDestination()
 {
-    UE_LOG(LogTemp, Display, TEXT("New Double Click Called"));
     if (SubscribedUnits.Num() > 0) {
         FHitResult Hit;
         bool bHitSucc = false;

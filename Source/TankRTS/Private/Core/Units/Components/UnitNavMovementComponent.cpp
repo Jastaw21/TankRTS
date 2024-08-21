@@ -6,6 +6,7 @@
 #include "Core/Utility/JWMath.h"
 #include "GameFramework/GameState.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "Runtime/Engine/Public/DrawDebugHelpers.h"
 
 #include "AIController.h"
 
@@ -30,7 +31,7 @@ void UUnitNavMovementComponent::RequestPathMove(const FVector& MoveInput)
     UE_LOG(LogTemp, Display, TEXT("RequestPathMove Speaking"));
 }
 
-// called in the main game loop
+// called in the main game loop - all movement handling flows through here
 void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 
@@ -40,8 +41,18 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
     else {
 
+        LineTraceRunningTime += DeltaTime;
+        bool ShouldLineTrace = LineTraceRunningTime >= LineTraceInterval;
+        FRotator LineTracedRotator;
+
+        if (ShouldLineTrace) {
+            FVector CurrentLoc = OwningUnit->GetActorLocation();
+            LineTraceRunningTime = 0.0f;
+            LineTracedRotator = LineTraceXSecondsAhead(CurrentLoc, LineTraceInterval);
+        }
+
         FVector Delta = GetNewVelocity(DeltaTime);
-        FRotator NewRotation = GetNewRotator(DeltaTime);
+        FRotator NewRotation = GetVelocityRotator(DeltaTime);
         FHitResult HitRes;
 
         bool SafeMoved = SafeMoveUpdatedComponent(Delta, NewRotation, true, HitRes, ETeleportType::TeleportPhysics);
@@ -67,7 +78,6 @@ bool UUnitNavMovementComponent::ShouldBrake(float DeltaTime)
     // include the "near side" of the acceptance radius
     return StoppingDistance >= (GetRemainingPathLength() - GetAcceptanceRadius());
 }
-
 bool UUnitNavMovementComponent::ActorIsOnLastLeg()
 {
     AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());
@@ -85,25 +95,37 @@ bool UUnitNavMovementComponent::ActorIsOnLastLeg()
     return false;
 }
 
-FRotator UUnitNavMovementComponent::LineTraceRTS(FVector& CurrentLocation_p, FVector& Velocity_p, float SecondsTilNextTick)
+FRotator UUnitNavMovementComponent::LineTraceXSecondsAhead(FVector& CurrentLocation_p, float SecondsTilNextTick)
 {
 
-    // GEngine->AddOnScreenDebugMessage(12, 0.4f, FColor::Silver, TEXT("Line Tracing"));
+    // where will we be
+   FVector NextLocation = CurrentLocation_p+(OwningUnit->GetActorForwardVector()*DistanceAheadToTrack*SecondsTilNextTick);
+   FVector ScanLoc = NextLocation - FVector( 0, 0, 0.1f );
 
-    FVector CurrentLocation = OwningUnit->GetActorLocation();
-    FVector NextLocation = GetLocationInXSeconds(CurrentLocation_p, Velocity_p, SecondsTilNextTick);
+
+    /*
+
+    DRAW DEBUG LINES
+
+    */
+    // draw the line ahead
+    DrawDebugLine(GetWorld(), CurrentLocation_p, NextLocation, FColor::Black, false, LineTraceInterval);
+    // draw sphere at current loc
+    DrawDebugSphere(GetWorld(), CurrentLocation_p, 10.0f, 32, FColor::Green, false, LineTraceInterval);
+    // draw sphere at calculated next loc
+    DrawDebugSphere(GetWorld(), NextLocation, 10.0f, 32, FColor::Red, false, LineTraceInterval);
+    DrawDebugSphere(GetWorld(), ScanLoc, 10.0f, 32, FColor::Yellow, false, LineTraceInterval);
 
     FHitResult LineTraceResult;
-    GetWorld()->LineTraceSingleByChannel(LineTraceResult, NextLocation, NextLocation -= FVector(0.0f, 0.0f, -1000.0f), ECollisionChannel::ECC_WorldStatic);
+
+    GetWorld()->LineTraceSingleByChannel(LineTraceResult, NextLocation, ScanLoc, ECollisionChannel::ECC_WorldDynamic);
 
     if (LineTraceResult.bBlockingHit) {
-
+       GEngine->AddOnScreenDebugMessage( 111, 1.0f, FColor::Red, TEXT( "HIT" ) );
         FVector HitLocation = LineTraceResult.Location;
-
         HitLocation *= FVector::ZAxisVector;
         FRotator ReturnRotator = (HitLocation - (CurrentLocation_p *= FVector::ZAxisVector)).ToOrientationRotator();
-
-        GEngine->AddOnScreenDebugMessage(13, 0.4f, FColor::Blue, *ReturnRotator.ToString());
+        DrawDebugSphere(GetWorld(), HitLocation, 20.0f, 16, FColor::Turquoise, true, LineTraceInterval);
 
         return ReturnRotator;
     } else {
@@ -112,23 +134,9 @@ FRotator UUnitNavMovementComponent::LineTraceRTS(FVector& CurrentLocation_p, FVe
     }
 }
 
-FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
+FRotator UUnitNavMovementComponent::GetVelocityRotator(float DeltaTime)
 {
 
-    LineTraceRunningTime += DeltaTime;
-
-    bool ShouldLineTrace = LineTraceRunningTime >= LineTraceInterval;
-    FRotator LineTracedRotator;
-
-    if (ShouldLineTrace) {
-        FVector CurrentLoc = OwningUnit->GetActorLocation();
-
-        LineTraceRunningTime = 0.0f;
-
-        LineTracedRotator = LineTraceRTS(CurrentLoc, CachedVelocity, LineTraceInterval * 0.95f);
-    }
-
-    // what is the change in desired rotation - think this ignores pitch
     FRotator RawAICommandedRotation = GetAICommandedRotation();
     FRotator RawVelocRotation = Velocity.ToOrientationRotator();
     FRotator BlendedRotation = FRotator(RawAICommandedRotation.Pitch, RawAICommandedRotation.Yaw, 0.0f);
@@ -144,7 +152,7 @@ FRotator UUnitNavMovementComponent::GetNewRotator(float DeltaTime)
     DeltaRot.Roll = 0.00f;
 
     // add the new calculated incremental rotation to the existing one
-    return PawnOwner->GetActorRotation() + DeltaRot + (ShouldLineTrace ? LineTracedRotator : FRotator::ZeroRotator);
+    return PawnOwner->GetActorRotation() + DeltaRot;
 }
 FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
 {
@@ -218,10 +226,7 @@ FRotator UUnitNavMovementComponent::GetAICommandedRotation()
 
     return FRotator::ZeroRotator;
 }
-FVector UUnitNavMovementComponent::GetLocationInXSeconds(FVector& CurrentLocation, FVector& Velocity_p, float XSeconds)
-{
-    return CurrentLocation + Velocity_p * XSeconds;
-}
+
 void UUnitNavMovementComponent::PushRotatorToUI(FRotator& inRotator)
 {
     if (GetWorld()) {

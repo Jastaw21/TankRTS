@@ -58,7 +58,7 @@ public:
      */
     // how often to print to logg
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
-    float LineTraceInterval = 0.5f;
+    float LineTraceInterval = 0.1f;
     // toggle movement logging on/off
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     bool bLoggingEnabled = false;

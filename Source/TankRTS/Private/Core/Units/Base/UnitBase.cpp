@@ -21,14 +21,18 @@ AUnitBase::AUnitBase()
     PrimaryActorTick.bCanEverTick = true;
 
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-    SetRootComponent( Mesh );
-    Mesh->bReceivesDecals = false;    
+    SetRootComponent(Mesh);
+    Mesh->bReceivesDecals = false;
 
     BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Capsule"));
     BoxCollisionComponent->SetupAttachment(RootComponent);
 
+    ForwardCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Forward Collision Capsule"));
+    ForwardCollisionComponent->SetupAttachment(RootComponent);
+
     MovementComponent = CreateDefaultSubobject<UUnitNavMovementComponent>(TEXT("New Movement"));
-    MovementComponent->SetUpdatedComponent(RootComponent);    
+    MovementComponent->SetUpdatedComponent(RootComponent);
+    
 
     SelectionDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("Selected Decal"));
     SelectionDecal->SetupAttachment(RootComponent);
@@ -71,11 +75,15 @@ void AUnitBase::SetDestination_Implementation(FVector Destination)
     }
 }
 
+UBoxComponent* AUnitBase::GetForwardCollisionBox()
+{
+    return ForwardCollisionComponent;
+}
+
 UUnitNavMovementComponent* AUnitBase::GetNavMovement()
 {
     return MovementComponent;
 }
-
 
 // Called every frame
 void AUnitBase::Tick(float DeltaTime)

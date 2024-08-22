@@ -52,10 +52,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UBoxComponent* BoxCollisionComponent;
 
+    UPROPERTY( EditAnywhere, BlueprintReadWrite )
+    UBoxComponent* ForwardCollisionComponent;
+
+
     // unit<->controller interface implementations
     virtual AUnitBase* SelectUnit_Implementation() override;
     virtual void DeselectUnit_Implementation() override;
     virtual void SetDestination_Implementation(FVector Destination) override;
+
+
+    UBoxComponent* GetForwardCollisionBox();
 
     UUnitNavMovementComponent* GetNavMovement();
 

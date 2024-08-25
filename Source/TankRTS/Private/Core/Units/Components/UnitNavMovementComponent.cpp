@@ -268,3 +268,93 @@ void UUnitNavMovementComponent::PushRotatorToUI(FRotator& inRotator)
         }
     }
 }
+
+
+
+#include "MyCustomMovementComponent.h"
+#include "GameFramework/Actor.h"
+#include "DrawDebugHelpers.h"
+#include "Engine/World.h"
+#include "Kismet/KismetMathLibrary.h"
+
+UMyCustomMovementComponent::UMyCustomMovementComponent()
+{
+    // Initialize default values
+    AvoidanceScanInterval = 0.5f;  // Scan every 0.5 seconds
+    TimeSinceLastScan = 0.0f;
+}
+
+void UMyCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    // Accumulate time since the last scan
+    TimeSinceLastScan += DeltaTime;
+
+    // Only scan if enough time has passed
+    if (TimeSinceLastScan >= AvoidanceScanInterval)
+    {
+        // Perform the avoidance check and reset the timer
+        FRotator AvoidanceRotation = GetAvoidanceRotation();
+
+        // Apply the avoidance rotation if needed
+        if (!AvoidanceRotation.IsNearlyZero())
+        {
+            AActor* Owner = GetOwner();
+            if (Owner)
+            {
+                FRotator NewRotation = Owner->GetActorRotation() + AvoidanceRotation;
+                Owner->SetActorRotation(NewRotation);
+            }
+        }
+
+        TimeSinceLastScan = 0.0f;  // Reset the scan timer
+    }
+
+    // Perform your regular movement logic here, e.g., SafeMoveUpdatedComponent()
+    // SafeMoveUpdatedComponent(DesiredMovement, UpdatedComponent->GetComponentRotation());
+}
+
+FRotator UMyCustomMovementComponent::GetAvoidanceRotation()
+{
+    AActor* Owner = GetOwner();
+    if (!Owner)
+    {
+        return FRotator::ZeroRotator;
+    }
+
+    // Get the current location and forward vector of the actor
+    FVector CurrentLocation = Owner->GetActorLocation();
+    FVector ForwardVector = Owner->GetActorForwardVector();
+
+    // Calculate the end location of the line trace
+    FVector TraceEnd = CurrentLocation + (ForwardVector * ScanAheadDistance);
+
+    // Perform the line trace (raycast)
+    FHitResult HitResult;
+    FCollisionQueryParams CollisionParams;
+    CollisionParams.AddIgnoredActor(Owner);  // Ignore self in trace
+
+    // Optionally, draw debug lines to visualize the trace
+    bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, CurrentLocation, TraceEnd, ECC_Visibility, CollisionParams);
+    DrawDebugLine(GetWorld(), CurrentLocation, TraceEnd, FColor::Green, false, AvoidanceScanInterval, 0, 2.0f);
+
+    // Check if we hit something
+    if (bHit)
+    {
+        // Optionally, draw debug point at the hit location
+        DrawDebugPoint(GetWorld(), HitResult.ImpactPoint, 10.0f, FColor::Red, false, AvoidanceScanInterval);
+
+        // Calculate the avoidance direction (rotate away from the hit normal)
+        FVector AvoidanceDirection = UKismetMathLibrary::GetReflectionVector(ForwardVector, HitResult.ImpactNormal);
+        FRotator AvoidanceRotation = AvoidanceDirection.Rotation();
+
+        // Optionally, you could scale the avoidance rotation by a strength factor
+        AvoidanceRotation.Yaw *= AvoidanceStrength;
+
+        return AvoidanceRotation;
+    }
+
+    // No hit detected, return zero rotation (no avoidance necessary)
+    return FRotator::ZeroRotator;
+}

@@ -68,31 +68,34 @@ public:
 
    
 
-private:
-    // cached, casted pointer to the parent unit
-    AUnitBase* OwningUnit;
-
-    // helpers for the "tick" event
+private: 
+    /*
+    NEXT MOVE CALCULATORS
+    */
     FRotator GetVelocityRotator(float DeltaTime);
     FVector GetNewVelocity(float DeltaTime);
-    FRotator GetAvoidanceRotation();
-
-    // push current rotator to the UI
-    void PushRotatorToUI(FRotator& inRotator);
-
-    // Functions to clean up the GetNewVelocity func
+    FRotator GetAvoidanceRotation();  
+   
+   
+    /*
+    INTERFACES TO AI CONTROLLER
+    */
     float GetRemainingPathLength();
     float GetAcceptanceRadius();
     FRotator GetAICommandedRotation();
-    bool ShouldBrake(float DeltaTime);
 
-    // check if we're on the last leg. Called every frame if not already set to true
-    bool ActorIsOnLastLeg();
 
-    FRotator LineTraceXSecondsAhead(FVector& CurrentLocation_p,  float SecondsTilNextTick);
+    /*
+    POSITION CHECKERS    
+    */   
+    bool ShouldBrake( float DeltaTime ); // returns true if we're in the decelleration zone   
+    bool ActorIsOnLastLeg(); // check if we're on the last leg. Called every frame if not already set to true
 
-    // used for logging
-    float LineTraceRunningTime { 0.0f };
+   
+    // cached, casted pointer to the parent unit
+    AUnitBase* OwningUnit;
+   
+    float AvoidanceScanRunningTime { 0.0f };
     // used to calculate acceleration
     FVector CachedVelocity;
 

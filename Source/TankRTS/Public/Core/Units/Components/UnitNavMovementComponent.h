@@ -58,13 +58,13 @@ public:
      */
     // how often to print to logg
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
-    float LineTraceInterval = 0.1f;
+    float AvoidanceScanInterval = 0.1f;
     // toggle movement logging on/off
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     bool bLoggingEnabled = false;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Scanning")
-    float DistanceAheadToTrack = 200.0f;
+    float ScanAheadDistance = 200.0f;
 
    
 
@@ -75,7 +75,7 @@ private:
     // helpers for the "tick" event
     FRotator GetVelocityRotator(float DeltaTime);
     FVector GetNewVelocity(float DeltaTime);
-    
+    FRotator GetAvoidanceRotation();
 
     // push current rotator to the UI
     void PushRotatorToUI(FRotator& inRotator);

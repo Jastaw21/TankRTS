@@ -6,6 +6,7 @@
 #include "Core/Units/Base/UnitBase.h"
 #include "Core/Utility/JWMath.h"
 #include "GameFramework/GameState.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Runtime/Engine/Public/DrawDebugHelpers.h"
 
@@ -43,13 +44,12 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
     else {
 
         LineTraceRunningTime += DeltaTime;
-        bool ShouldLineTrace = LineTraceRunningTime >= LineTraceInterval;
+        bool ShouldLineTrace = LineTraceRunningTime >= AvoidanceScanInterval;
         FRotator LineTracedRotator = FRotator::ZeroRotator;
 
         if (ShouldLineTrace) {
-            FVector CurrentLoc = OwningUnit->GetActorLocation();
+            LineTracedRotator = GetAvoidanceRotation();
             LineTraceRunningTime = 0.0f;
-            LineTracedRotator = LineTraceXSecondsAhead(CurrentLoc, LineTraceInterval);
         }
 
         FVector Delta = GetNewVelocity(DeltaTime);
@@ -96,80 +96,79 @@ bool UUnitNavMovementComponent::ActorIsOnLastLeg()
     return false;
 }
 
-FRotator UUnitNavMovementComponent::LineTraceXSecondsAhead(FVector& CurrentLocation_p, float SecondsTilNextTick)
-{
-
-    // will be worth moving to a UPROPERTY later
-    float ZDistanceToScan = 10.0f;
-
-    // where is the forward collision box
-    FVector ForwardCollisionBoxLocation = OwningUnit->GetForwardCollisionBox()->GetComponentLocation();
-
-    // calculate the scan ahead point
-    FVector NextLocation = (ForwardCollisionBoxLocation + (OwningUnit->GetActorForwardVector() * DistanceAheadToTrack * SecondsTilNextTick));
-    FVector ScanLoc = NextLocation - FVector(0, 0, ZDistanceToScan);
-
-    // calculate the scan below pointt
-    FVector ScanBelowLoc = ForwardCollisionBoxLocation - FVector(0, 0, ZDistanceToScan *5);
-
-    /*
-
-  DRAW DEBUG LINES
-
-  */
-    // draw the line ahead
-    DrawDebugLine(GetWorld(), ForwardCollisionBoxLocation, NextLocation, FColor::Black, false, LineTraceInterval);
-    // draw sphere at current loc
-    DrawDebugSphere(GetWorld(), ForwardCollisionBoxLocation, 10.0f, 32, FColor::Green, false, LineTraceInterval);
-    // draw sphere at calculated next loc
-    DrawDebugSphere(GetWorld(), NextLocation, 10.0f, 32, FColor::Red, false, LineTraceInterval);
-    DrawDebugSphere(GetWorld(), ScanLoc, 10.0f, 32, FColor::Yellow, false, LineTraceInterval);
-    DrawDebugSphere(GetWorld(), ForwardCollisionBoxLocation, 10.0f, 32, FColor(230,45,100), false, LineTraceInterval);
-    DrawDebugSphere(GetWorld(), ScanBelowLoc, 10.0f, 32, FColor(130,145,200), false, LineTraceInterval);
-
-    // line trace the ahead
-    FHitResult LineTraceAheadResult;
-    GetWorld()->LineTraceSingleByChannel(LineTraceAheadResult, ForwardCollisionBoxLocation, ScanLoc, ECollisionChannel::ECC_WorldDynamic);
-
-    FHitResult LineTraceBelowResult;
-    GetWorld()->LineTraceSingleByChannel(LineTraceBelowResult, ForwardCollisionBoxLocation, ScanBelowLoc, ECollisionChannel::ECC_WorldDynamic);
-
-    if (LineTraceAheadResult.bBlockingHit || LineTraceBelowResult.bBlockingHit) {
-
-        FRotator ReturnRotator;
-
-        if (!LineTraceBelowResult.bBlockingHit) {
-            GEngine->AddOnScreenDebugMessage(1121, 1.0f, FColor::White, TEXT("HIT BELOW"));
-            FVector HitLocation = LineTraceAheadResult.Location;
-
-            ReturnRotator = (HitLocation - (ForwardCollisionBoxLocation)).ToOrientationRotator();
-            DrawDebugSphere(GetWorld(), LineTraceAheadResult.ImpactPoint, 80.0f, 16, FColor::Turquoise, true, 3.0f);
-
-            return ReturnRotator;
-
-        }
-
-        else if (LineTraceAheadResult.bBlockingHit) {
-
-            GEngine->AddOnScreenDebugMessage(111, 1.0f, FColor::Red, TEXT("HIT"));
-            FVector HitLocation = LineTraceAheadResult.Location;
-
-            ReturnRotator = (HitLocation - (ForwardCollisionBoxLocation)).ToOrientationRotator();
-            DrawDebugSphere(GetWorld(), LineTraceAheadResult.ImpactPoint, 80.0f, 16, FColor::Turquoise, true, 3.0f);
-
-            return ReturnRotator;
-        }
-    }
-
-    return FRotator::ZeroRotator;
-}
+// FRotator UUnitNavMovementComponent::LineTraceXSecondsAhead(FVector& CurrentLocation_p, float SecondsTilNextTick)
+//{
+//
+//     // will be worth moving to a UPROPERTY later
+//     float ZDistanceToScan = 10.0f;
+//
+//     // where is the forward collision box
+//     FVector ForwardCollisionBoxLocation = OwningUnit->GetForwardCollisionBox()->GetComponentLocation();
+//
+//     // calculate the scan ahead point
+//     FVector NextLocation = (ForwardCollisionBoxLocation + (OwningUnit->GetActorForwardVector() * ScanAheadDistance * SecondsTilNextTick));
+//     FVector ScanLoc = NextLocation - FVector(0, 0, ZDistanceToScan);
+//
+//     // calculate the scan below pointt
+//     FVector ScanBelowLoc = ForwardCollisionBoxLocation - FVector(0, 0, ZDistanceToScan * 5);
+//
+//     /*
+//
+//   DRAW DEBUG LINES
+//
+//   */
+//     // draw the line ahead
+//     DrawDebugLine(GetWorld(), ForwardCollisionBoxLocation, NextLocation, FColor::Black, false, AvoidanceScanInterval);
+//     // draw sphere at current loc
+//     DrawDebugSphere(GetWorld(), ForwardCollisionBoxLocation, 10.0f, 32, FColor::Green, false, AvoidanceScanInterval);
+//     // draw sphere at calculated next loc
+//     DrawDebugSphere(GetWorld(), NextLocation, 10.0f, 32, FColor::Red, false, AvoidanceScanInterval);
+//     DrawDebugSphere(GetWorld(), ScanLoc, 10.0f, 32, FColor::Yellow, false, AvoidanceScanInterval);
+//     DrawDebugSphere(GetWorld(), ForwardCollisionBoxLocation, 10.0f, 32, FColor(230, 45, 100), false, AvoidanceScanInterval);
+//     DrawDebugSphere(GetWorld(), ScanBelowLoc, 10.0f, 32, FColor(130, 145, 200), false, AvoidanceScanInterval);
+//
+//     // line trace the ahead
+//     FHitResult LineTraceAheadResult;
+//     GetWorld()->LineTraceSingleByChannel(LineTraceAheadResult, ForwardCollisionBoxLocation, ScanLoc, ECollisionChannel::ECC_WorldDynamic);
+//
+//     FHitResult LineTraceBelowResult;
+//     GetWorld()->LineTraceSingleByChannel(LineTraceBelowResult, ForwardCollisionBoxLocation, ScanBelowLoc, ECollisionChannel::ECC_WorldDynamic);
+//
+//     if (LineTraceAheadResult.bBlockingHit || LineTraceBelowResult.bBlockingHit) {
+//
+//         FRotator ReturnRotator;
+//
+//         if (!LineTraceBelowResult.bBlockingHit) {
+//             GEngine->AddOnScreenDebugMessage(1121, 1.0f, FColor::White, TEXT("HIT BELOW"));
+//             FVector HitLocation = LineTraceAheadResult.Location;
+//
+//             ReturnRotator = (HitLocation - (ForwardCollisionBoxLocation)).ToOrientationRotator();
+//             DrawDebugSphere(GetWorld(), LineTraceAheadResult.ImpactPoint, 80.0f, 16, FColor::Turquoise, true, 3.0f);
+//
+//             return ReturnRotator;
+//
+//         }
+//
+//         else if (LineTraceAheadResult.bBlockingHit) {
+//
+//             GEngine->AddOnScreenDebugMessage(111, 1.0f, FColor::Red, TEXT("HIT"));
+//             FVector HitLocation = LineTraceAheadResult.Location;
+//
+//             ReturnRotator = (HitLocation - (ForwardCollisionBoxLocation)).ToOrientationRotator();
+//             DrawDebugSphere(GetWorld(), LineTraceAheadResult.ImpactPoint, 80.0f, 16, FColor::Turquoise, true, 3.0f);
+//
+//             return ReturnRotator;
+//         }
+//     }
+//
+//     return FRotator::ZeroRotator;
+// }
 
 FRotator UUnitNavMovementComponent::GetVelocityRotator(float DeltaTime)
 {
 
-    FRotator RawAICommandedRotation = GetAICommandedRotation();
     FRotator RawVelocRotation = Velocity.ToOrientationRotator();
-    FRotator BlendedRotation = FRotator(RawAICommandedRotation.Pitch, RawAICommandedRotation.Yaw, 0.0f);
+    FRotator BlendedRotation = FRotator(GetAICommandedRotation().Pitch, GetAICommandedRotation().Yaw, 0.0f);
 
     FRotator DeltaRot = BlendedRotation - PawnOwner->GetActorRotation();
 
@@ -269,57 +268,10 @@ void UUnitNavMovementComponent::PushRotatorToUI(FRotator& inRotator)
     }
 }
 
-
-
-#include "MyCustomMovementComponent.h"
-#include "GameFramework/Actor.h"
-#include "DrawDebugHelpers.h"
-#include "Engine/World.h"
-#include "Kismet/KismetMathLibrary.h"
-
-UMyCustomMovementComponent::UMyCustomMovementComponent()
-{
-    // Initialize default values
-    AvoidanceScanInterval = 0.5f;  // Scan every 0.5 seconds
-    TimeSinceLastScan = 0.0f;
-}
-
-void UMyCustomMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-    // Accumulate time since the last scan
-    TimeSinceLastScan += DeltaTime;
-
-    // Only scan if enough time has passed
-    if (TimeSinceLastScan >= AvoidanceScanInterval)
-    {
-        // Perform the avoidance check and reset the timer
-        FRotator AvoidanceRotation = GetAvoidanceRotation();
-
-        // Apply the avoidance rotation if needed
-        if (!AvoidanceRotation.IsNearlyZero())
-        {
-            AActor* Owner = GetOwner();
-            if (Owner)
-            {
-                FRotator NewRotation = Owner->GetActorRotation() + AvoidanceRotation;
-                Owner->SetActorRotation(NewRotation);
-            }
-        }
-
-        TimeSinceLastScan = 0.0f;  // Reset the scan timer
-    }
-
-    // Perform your regular movement logic here, e.g., SafeMoveUpdatedComponent()
-    // SafeMoveUpdatedComponent(DesiredMovement, UpdatedComponent->GetComponentRotation());
-}
-
-FRotator UMyCustomMovementComponent::GetAvoidanceRotation()
+FRotator UUnitNavMovementComponent::GetAvoidanceRotation()
 {
     AActor* Owner = GetOwner();
-    if (!Owner)
-    {
+    if (!Owner) {
         return FRotator::ZeroRotator;
     }
 
@@ -333,15 +285,14 @@ FRotator UMyCustomMovementComponent::GetAvoidanceRotation()
     // Perform the line trace (raycast)
     FHitResult HitResult;
     FCollisionQueryParams CollisionParams;
-    CollisionParams.AddIgnoredActor(Owner);  // Ignore self in trace
+    CollisionParams.AddIgnoredActor(Owner); // Ignore self in trace
 
     // Optionally, draw debug lines to visualize the trace
     bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, CurrentLocation, TraceEnd, ECC_Visibility, CollisionParams);
     DrawDebugLine(GetWorld(), CurrentLocation, TraceEnd, FColor::Green, false, AvoidanceScanInterval, 0, 2.0f);
 
     // Check if we hit something
-    if (bHit)
-    {
+    if (bHit) {
         // Optionally, draw debug point at the hit location
         DrawDebugPoint(GetWorld(), HitResult.ImpactPoint, 10.0f, FColor::Red, false, AvoidanceScanInterval);
 
@@ -350,7 +301,7 @@ FRotator UMyCustomMovementComponent::GetAvoidanceRotation()
         FRotator AvoidanceRotation = AvoidanceDirection.Rotation();
 
         // Optionally, you could scale the avoidance rotation by a strength factor
-        AvoidanceRotation.Yaw *= AvoidanceStrength;
+        AvoidanceRotation.Yaw *= 1;
 
         return AvoidanceRotation;
     }

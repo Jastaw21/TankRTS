@@ -21,6 +21,9 @@ DEFAULT FUNCTIONS
 // ctor
 UUnitNavMovementComponent::UUnitNavMovementComponent()
 {
+
+    DistanceToScanDown = 200.0f;
+
     TObjectPtr<AActor> ActorPtr = GetOwner();
     if (ActorPtr) {
 
@@ -46,39 +49,31 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
     else {
 
-        // tracks when the line trace last ran
-        AvoidanceScanRunningTime += DeltaTime;
-        bool ShouldLineTrace = AvoidanceScanRunningTime >= AvoidanceScanInterval;
+        FVector NewDirection = GetNewVelocity(DeltaTime);
+        FRotator NewRotation = GetVelocityRotator(DeltaTime);
 
-        // get the rotation first
-        FRotator RawRotation = GetVelocityRotator(DeltaTime);
-        FRotator AvoidanceRotation = ShouldLineTrace ? GetAvoidanceRotation() : FRotator::ZeroRotator;
+        if (SubsequentCollisons <= MaxCollisionsBeforeCheating) {
 
-        FRotator NewRotation = RawRotation + AvoidanceRotation;
+            FHitResult Hit;
 
-        // rotate the component towards the target before moving.
-        UpdatedComponent->SetRelativeRotation(NewRotation);
+            if (!SafeMoveUpdatedComponent(NewDirection, NewRotation, true, Hit))
 
-        // check if we're rotated inside the tolerance before moving forwards
+            {
+                SubsequentCollisons += 1;
 
-        if ((CachedVelocity.ToOrientationRotator()-NewRotation).IsNearlyZero(RotationTolerance*4)) {
-
-            // get acceleration modified, AI commanded, velocity along our path
-            FVector Delta = GetNewVelocity(DeltaTime);
-
-            // to store the hit results
-            FHitResult HitRes;
-
-            // try to move it
-            SafeMoveUpdatedComponent(Delta, NewRotation, true, HitRes);
-
-            if (HitRes.bBlockingHit) {
-
-                SlideAlongSurface(Delta, 1 - HitRes.Time, HitRes.ImpactNormal, HitRes);
+                SlideAlongSurface(NewDirection, 1.0f - Hit.Time, Hit.Normal, Hit);
             }
-
-            CachedVelocity = Delta;
         }
+
+        else {
+
+            MoveUpdatedComponent(NewDirection, NewRotation, false);
+            SubsequentCollisons = 0;
+        }
+
+        CachedVelocity = NewDirection;
+        CachedVelocity = NewDirection;
+        // HandleGroundInteraction(DeltaTime);
     }
 }
 
@@ -124,7 +119,7 @@ FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
     FVector NormalisedRequestedVelocity = Velocity.GetSafeNormal();
 
     // scale that raw direction vector, by the new sped
-    return ClampedNewSpeed * NormalisedRequestedVelocity;
+    return ClampedNewSpeed * NormalisedRequestedVelocity * FVector(1, 1, 0);
 }
 FRotator UUnitNavMovementComponent::GetAvoidanceRotation()
 {
@@ -225,6 +220,11 @@ FRotator UUnitNavMovementComponent::GetAICommandedRotation()
     return FRotator::ZeroRotator;
 }
 
+float UUnitNavMovementComponent::GetCommandedAndActualYawVariance(FRotator& Commanded, FRotator& Actual)
+{
+    return (Commanded - Actual).Yaw;
+}
+
 // POSITION CHECKERS
 bool UUnitNavMovementComponent::ShouldBrake(float DeltaTime)
 {
@@ -251,4 +251,27 @@ bool UUnitNavMovementComponent::ActorIsOnLastLeg()
     }
 
     return false;
+}
+
+void UUnitNavMovementComponent::HandleGroundInteraction(float DeltaTime)
+{
+    FVector CurrentPosition = UpdatedComponent->GetComponentLocation();
+    FVector DownLocation = FVector(0, 0, -1);
+    FVector LineTraceEnd = CurrentPosition + (DistanceToScanDown * DownLocation);
+
+    FHitResult LineTraceResult;
+
+    FCollisionQueryParams CollisionParams;
+    CollisionParams.AddIgnoredActor(GetOwner());
+
+    if (GetWorld()->LineTraceSingleByChannel(LineTraceResult, CurrentPosition, LineTraceEnd, ECC_Visibility, CollisionParams)) {
+
+        FVector IdealLocation = LineTraceResult.Location;
+        IdealLocation.Z += 15.0f;
+        UpdatedComponent->SetWorldLocation(IdealLocation);
+
+        DrawDebugSphere(GetWorld(), LineTraceResult.ImpactPoint, 10.0f, 16, FColor::Red, false, AvoidanceScanInterval);
+        FRotator NewRotation = IdealLocation.Rotation();
+        UpdatedComponent->SetRelativeRotation(NewRotation);
+    }
 }

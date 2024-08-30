@@ -62,39 +62,36 @@ public:
     // toggle movement logging on/off
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     bool bLoggingEnabled = false;
-    
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Scanning")
     float ScanAheadDistance = 200.0f;
 
-   
-
-private: 
+private:
     /*
     NEXT MOVE CALCULATORS
     */
     FRotator GetVelocityRotator(float DeltaTime);
     FVector GetNewVelocity(float DeltaTime);
-    FRotator GetAvoidanceRotation();  
-   
-   
+    FRotator GetAvoidanceRotation();
+
     /*
     INTERFACES TO AI CONTROLLER
     */
     float GetRemainingPathLength();
     float GetAcceptanceRadius();
     FRotator GetAICommandedRotation();
-
+    float GetCommandedAndActualYawVariance( FRotator& Commanded, FRotator& Actual );
 
     /*
-    POSITION CHECKERS    
-    */   
-    bool ShouldBrake( float DeltaTime ); // returns true if we're in the decelleration zone   
+    POSITION CHECKERS
+    */
+    bool ShouldBrake(float DeltaTime); // returns true if we're in the decelleration zone
     bool ActorIsOnLastLeg(); // check if we're on the last leg. Called every frame if not already set to true
+    void HandleGroundInteraction(float DeltaTime);
 
-   
     // cached, casted pointer to the parent unit
     AUnitBase* OwningUnit;
-   
+
     float AvoidanceScanRunningTime { 0.0f };
     // used to calculate acceleration
     FVector CachedVelocity;
@@ -107,4 +104,9 @@ private:
     bool bIsOnLastLeg = false;
     bool bHasStartedLastLeg = false;
     bool isUnitMoving = false;
+
+    float DistanceToScanDown;
+
+    uint32 SubsequentCollisons = 0;
+    uint32 MaxCollisionsBeforeCheating = 100;
 };

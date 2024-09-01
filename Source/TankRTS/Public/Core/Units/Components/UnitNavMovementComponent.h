@@ -58,13 +58,12 @@ public:
      */
     // how often to print to logg
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
-    float AvoidanceScanInterval = 0.1f;
+    float GroundScanInterval = 0.1f;
     // toggle movement logging on/off
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Logging")
     bool bLoggingEnabled = false;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement Scanning")
-    float ScanAheadDistance = 200.0f;
+   
 
 private:
     /*
@@ -72,7 +71,7 @@ private:
     */
     FRotator GetVelocityRotator(float DeltaTime);
     FVector GetNewVelocity(float DeltaTime);
-    FRotator GetAvoidanceRotation();
+
 
     /*
     INTERFACES TO AI CONTROLLER
@@ -80,7 +79,9 @@ private:
     float GetRemainingPathLength();
     float GetAcceptanceRadius();
     FRotator GetAICommandedRotation();
-    float GetCommandedAndActualYawVariance( FRotator& Commanded, FRotator& Actual );
+    float GetCommandedAndActualYawVariance(const FRotator& Commanded, const FRotator& Actual );
+    void DrawPathLines();
+
 
     /*
     POSITION CHECKERS
@@ -92,7 +93,7 @@ private:
     // cached, casted pointer to the parent unit
     AUnitBase* OwningUnit;
 
-    float AvoidanceScanRunningTime { 0.0f };
+    float GroundScanRunningTime { 0.0f };
     // used to calculate acceleration
     FVector CachedVelocity;
 
@@ -105,8 +106,6 @@ private:
     bool bHasStartedLastLeg = false;
     bool isUnitMoving = false;
 
-    float DistanceToScanDown;
 
-    uint32 SubsequentCollisons = 0;
-    uint32 MaxCollisionsBeforeCheating = 100;
+    FVector MovementInput;
 };

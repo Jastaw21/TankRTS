@@ -22,8 +22,6 @@ DEFAULT FUNCTIONS
 UUnitNavMovementComponent::UUnitNavMovementComponent()
 {
 
-    DistanceToScanDown = 200.0f;
-
     TObjectPtr<AActor> ActorPtr = GetOwner();
     if (ActorPtr) {
 
@@ -37,7 +35,7 @@ void UUnitNavMovementComponent::RequestDirectMove(const FVector& MoveVelocity, b
 }
 void UUnitNavMovementComponent::RequestPathMove(const FVector& MoveInput)
 {
-    UE_LOG(LogTemp, Display, TEXT("RequestPathMove Speaking"));
+    Velocity = MoveInput;
 }
 
 void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -49,31 +47,37 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
     else {
 
-        FVector NewDirection = GetNewVelocity(DeltaTime);
+        DrawPathLines();
+
         FRotator NewRotation = GetVelocityRotator(DeltaTime);
+        FVector NewDirection;
 
-        if (SubsequentCollisons <= MaxCollisionsBeforeCheating) {
+        if (FMath::IsNearlyZero(GetCommandedAndActualYawVariance(GetAICommandedRotation(), NewRotation), RotationTolerance * 10)) {
 
-            FHitResult Hit;
+            NewDirection = GetNewVelocity(DeltaTime);
+        }
 
-            if (!SafeMoveUpdatedComponent(NewDirection, NewRotation, true, Hit))
+        else
+           {
+           NewDirection = FVector::ZeroVector;
+           }
 
-            {
-                SubsequentCollisons += 1;
+        FHitResult Hit;
 
-                SlideAlongSurface(NewDirection, 1.0f - Hit.Time, Hit.Normal, Hit);
-            }
+        if (!SafeMoveUpdatedComponent(NewDirection, NewRotation, true, Hit))
+
+        {
+            SlideAlongSurface(NewDirection, 1.0f - Hit.Time, Hit.Normal, Hit);
         }
 
         else {
 
             MoveUpdatedComponent(NewDirection, NewRotation, false);
-            SubsequentCollisons = 0;
         }
 
         CachedVelocity = NewDirection;
-        CachedVelocity = NewDirection;
-        // HandleGroundInteraction(DeltaTime);
+
+        HandleGroundInteraction(DeltaTime);
     }
 }
 
@@ -94,8 +98,10 @@ FRotator UUnitNavMovementComponent::GetVelocityRotator(float DeltaTime)
     else {
 
         JWMath::ScaleVectorToSpeed(DeltaRot, RotationSpeed * DeltaTime);
+        DeltaRot.Pitch = 0;
+        DeltaRot.Roll = 0;
         // add the new calculated incremental rotation to the existing one
-        return PawnOwner->GetActorRotation() + DeltaRot;
+        return PawnOwner->GetActorRotation() + (DeltaRot);
     }
 }
 FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
@@ -120,55 +126,6 @@ FVector UUnitNavMovementComponent::GetNewVelocity(float DeltaTime)
 
     // scale that raw direction vector, by the new sped
     return ClampedNewSpeed * NormalisedRequestedVelocity * FVector(1, 1, 0);
-}
-FRotator UUnitNavMovementComponent::GetAvoidanceRotation()
-{
-
-    AvoidanceScanRunningTime = 0.0f;
-
-    AActor* Owner = GetOwner();
-    if (!Owner) {
-        return FRotator::ZeroRotator;
-    }
-
-    // Get the current location and forward vector of the actor
-    FVector CurrentLocation = Owner->GetActorLocation();
-    FVector ForwardVector = Owner->GetActorForwardVector();
-
-    // Calculate the end location of the line trace
-    FVector TraceEnd = CurrentLocation + (ForwardVector * ScanAheadDistance);
-
-    // Perform the line trace (raycast)
-    FHitResult HitResult;
-    FCollisionQueryParams CollisionParams;
-    CollisionParams.AddIgnoredActor(Owner); // Ignore self in trace
-
-    // Optionally, draw debug lines to visualize the trace
-    bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, CurrentLocation, TraceEnd, ECC_Visibility, CollisionParams);
-    /* DrawDebugLine(GetWorld(), CurrentLocation, TraceEnd, FColor::Green, false, AvoidanceScanInterval, 0, 2.0f);
-     DrawDebugSphere(GetWorld(), CurrentLocation, 10.0f, 16, FColor::Black, false, AvoidanceScanInterval);
-     DrawDebugSphere(GetWorld(), TraceEnd, 10.0f, 16, FColor::Magenta, false, AvoidanceScanInterval);*/
-
-    // Check if we hit something
-    if (bHit) {
-
-        GEngine->AddOnScreenDebugMessage(99, AvoidanceScanInterval, FColor::Magenta, TEXT("HIT"));
-
-        // Optionally, draw debug point at the hit location
-        DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 10.0f, 16, FColor::Red, false, AvoidanceScanInterval);
-
-        // Calculate the avoidance direction (rotate away from the hit normal)
-        FVector AvoidanceDirection = UKismetMathLibrary::GetReflectionVector(ForwardVector, HitResult.ImpactNormal);
-        FRotator AvoidanceRotation = AvoidanceDirection.Rotation();
-
-        // Optionally, you could scale the avoidance rotation by a strength factor
-        AvoidanceRotation.Yaw *= 1;
-
-        return AvoidanceRotation;
-    }
-
-    // No hit detected, return zero rotation (no avoidance necessary)
-    return FRotator::ZeroRotator;
 }
 
 // INTERFACES TO AI CONTROLLER
@@ -220,9 +177,34 @@ FRotator UUnitNavMovementComponent::GetAICommandedRotation()
     return FRotator::ZeroRotator;
 }
 
-float UUnitNavMovementComponent::GetCommandedAndActualYawVariance(FRotator& Commanded, FRotator& Actual)
+float UUnitNavMovementComponent::GetCommandedAndActualYawVariance(const FRotator& Commanded, const FRotator& Actual)
 {
     return (Commanded - Actual).Yaw;
+}
+
+void UUnitNavMovementComponent::DrawPathLines()
+{
+    AAIController* Controller = Cast<AAIController, AController>(OwningUnit->GetController());
+
+    if (IsValid(Controller)) {
+
+        UPathFollowingComponent* PFComponent = Controller->GetPathFollowingComponent();
+
+        if (PFComponent != nullptr && PFComponent->HasValidPath()) {
+
+            const FNavPathSharedPtr PathToFollow = PFComponent->GetPath();
+
+            FVector LastPathPoint = UpdatedComponent->GetComponentLocation();
+            uint32 LastPPIndex = PFComponent->GetCurrentPathIndex();
+
+            int32 Length = PathToFollow->GetPathPoints().Num();
+
+            for (FNavPathPoint& PathPoint : PathToFollow->GetPathPoints()) {
+
+                DrawDebugSphere(GetWorld(), PathPoint.Location, 20.0f, 32, FColor::Turquoise, false, 0.2f);
+            }
+        }
+    }
 }
 
 // POSITION CHECKERS
@@ -255,23 +237,57 @@ bool UUnitNavMovementComponent::ActorIsOnLastLeg()
 
 void UUnitNavMovementComponent::HandleGroundInteraction(float DeltaTime)
 {
-    FVector CurrentPosition = UpdatedComponent->GetComponentLocation();
-    FVector DownLocation = FVector(0, 0, -1);
-    FVector LineTraceEnd = CurrentPosition + (DistanceToScanDown * DownLocation);
 
-    FHitResult LineTraceResult;
-
+    // ingore ourselves in the query
     FCollisionQueryParams CollisionParams;
     CollisionParams.AddIgnoredActor(GetOwner());
+    float DistanceToScan = 100.0f;
 
-    if (GetWorld()->LineTraceSingleByChannel(LineTraceResult, CurrentPosition, LineTraceEnd, ECC_Visibility, CollisionParams)) {
+    // scan the front first
 
-        FVector IdealLocation = LineTraceResult.Location;
-        IdealLocation.Z += 15.0f;
-        UpdatedComponent->SetWorldLocation(IdealLocation);
+    FHitResult FwdLineTraceResult;
 
-        DrawDebugSphere(GetWorld(), LineTraceResult.ImpactPoint, 10.0f, 16, FColor::Red, false, AvoidanceScanInterval);
-        FRotator NewRotation = IdealLocation.Rotation();
-        UpdatedComponent->SetRelativeRotation(NewRotation);
+    FVector FwdCollisionLocation = OwningUnit->GetForwardCollisionBox()->GetComponentLocation();
+
+    // get a direction downwards from the collision box
+    FRotator FwdCollisionRotation = (OwningUnit->GetForwardCollisionBox()->GetUpVector().Rotation()) *= -1;
+
+    // scan 100 units in the dwds direction
+    FVector FwdScanTo = FwdCollisionLocation + FwdCollisionRotation.Vector() * DistanceToScan;
+
+    // perform the scan & draw a debug line
+    bool FwdColl = GetWorld()->LineTraceSingleByChannel(FwdLineTraceResult, FwdCollisionLocation, FwdScanTo, ECC_Visibility, CollisionParams);
+    DrawDebugLine(GetWorld(), FwdCollisionLocation, FwdScanTo, FColor::Cyan, false, GroundScanInterval);
+
+    // scan the back
+    FHitResult AftLineTraceResult;
+
+    FVector AftCollisionLoc = OwningUnit->GetAftCollisionBox()->GetComponentLocation();
+
+    // get a direction downwards from the collision box
+    FRotator AftCollisionRot = (OwningUnit->GetAftCollisionBox()->GetUpVector().Rotation()) *= -1;
+
+    // scan 100 units in the dwds direction
+    FVector AftScanTo = AftCollisionLoc + AftCollisionRot.Vector() * DistanceToScan;
+
+    // perform the scan & draw a debug line
+    bool AftColl = GetWorld()->LineTraceSingleByChannel(AftLineTraceResult, AftCollisionLoc, AftScanTo, ECC_Visibility, CollisionParams);
+    DrawDebugLine(GetWorld(), AftCollisionLoc, AftScanTo, FColor::Red, false, GroundScanInterval);
+
+    if (FwdColl && AftColl) {
+
+        // take the average Z position of the two scans - and prevent us from going underground
+        float ZLoc = FMath::Clamp((FwdLineTraceResult.ImpactPoint.Z + AftLineTraceResult.ImpactPoint.Z) / 2.0f, 5.0f, 2000.0f);
+        FVector CurrentLocation = UpdatedComponent->GetComponentLocation();
+
+        // only edit the Z position, to snap towards floor
+        CurrentLocation.Z = ZLoc + 20.0f;
+
+        UpdatedComponent->SetRelativeLocation(CurrentLocation);
+
+        // find the angle of the line between the two collisions
+        FRotator BodyRotation = (FwdLineTraceResult.ImpactPoint - AftLineTraceResult.ImpactPoint).Rotation();
+
+        UpdatedComponent->SetRelativeRotation(BodyRotation);
     }
 }

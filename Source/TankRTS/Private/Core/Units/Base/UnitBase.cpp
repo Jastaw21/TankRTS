@@ -20,21 +20,21 @@ AUnitBase::AUnitBase()
     // Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
 
-    Mesh = CreateDefaultSubobject<UStaticMeshComponent>( TEXT( "Mesh" ) );
-    SetRootComponent( Mesh );
+    Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+    SetRootComponent(Mesh);
     Mesh->bReceivesDecals = false;
 
-
-    BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>( TEXT( "Collision Capsule" ) );
-    BoxCollisionComponent->SetupAttachment( RootComponent ); 
-     
-   
+    BoxCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Capsule"));
+    BoxCollisionComponent->SetupAttachment(RootComponent);
 
     ForwardCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Forward Collision Capsule"));
     ForwardCollisionComponent->SetupAttachment(RootComponent);
 
+    AftCollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Aft Collision Capsule"));
+    AftCollisionComponent->SetupAttachment(RootComponent);
+
     MovementComponent = CreateDefaultSubobject<UUnitNavMovementComponent>(TEXT("New Movement"));
-    MovementComponent->SetUpdatedComponent(RootComponent);    
+    MovementComponent->SetUpdatedComponent(RootComponent);
 
     SelectionDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("Selected Decal"));
     SelectionDecal->SetupAttachment(RootComponent);
@@ -81,6 +81,11 @@ UBoxComponent* AUnitBase::GetForwardCollisionBox()
 {
     return ForwardCollisionComponent;
 }
+
+UBoxComponent* AUnitBase::GetAftCollisionBox()
+   {
+   return AftCollisionComponent;
+   }
 
 UUnitNavMovementComponent* AUnitBase::GetNavMovement()
 {

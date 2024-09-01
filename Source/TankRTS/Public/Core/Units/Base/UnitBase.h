@@ -56,6 +56,10 @@ public:
     UBoxComponent* ForwardCollisionComponent;
 
 
+    UPROPERTY( EditAnywhere, BlueprintReadWrite )
+    UBoxComponent* AftCollisionComponent;
+
+
     // unit<->controller interface implementations
     virtual AUnitBase* SelectUnit_Implementation() override;
     virtual void DeselectUnit_Implementation() override;
@@ -63,6 +67,10 @@ public:
 
 
     UBoxComponent* GetForwardCollisionBox();
+    UBoxComponent* GetAftCollisionBox();
+    
+
+
 
     UUnitNavMovementComponent* GetNavMovement();
 

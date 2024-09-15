@@ -47,37 +47,48 @@ void UUnitNavMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 
     else {
 
-        DrawPathLines();
-
-        FRotator NewRotation = GetVelocityRotator(DeltaTime);
-        FVector NewDirection;
-
-        if (FMath::IsNearlyZero(GetCommandedAndActualYawVariance(GetAICommandedRotation(), NewRotation), RotationTolerance * 10)) {
-
-            NewDirection = GetNewVelocity(DeltaTime);
-        }
-
-        else
-           {
-           NewDirection = FVector::ZeroVector;
-           }
-
-        FHitResult Hit;
-
-        if (!SafeMoveUpdatedComponent(NewDirection, NewRotation, true, Hit))
-
-        {
-            SlideAlongSurface(NewDirection, 1.0f - Hit.Time, Hit.Normal, Hit);
+        if (Velocity.Length() == 0) {
+            GEngine->AddOnScreenDebugMessage(1, DeltaTime * 1.1, FColor::Black, TEXT("NO MOVEMENT REQUIRED"));
         }
 
         else {
+            GEngine->AddOnScreenDebugMessage(1, DeltaTime * 1.1, FColor::White, TEXT("MOVEMENT REQUESTED"));
 
-            MoveUpdatedComponent(NewDirection, NewRotation, false);
+            DrawPathLines();
+
+            FRotator NewRotation = GetVelocityRotator(DeltaTime);
+            FVector NewDirection;
+
+            if (FMath::IsNearlyZero(GetCommandedAndActualYawVariance(GetAICommandedRotation(), NewRotation), RotationTolerance*2)) {
+
+                GEngine->AddOnScreenDebugMessage(2, DeltaTime * 1.1, FColor::Green, TEXT("Rotation Aligned"));
+                NewDirection = GetNewVelocity(DeltaTime);
+            }
+
+            else {
+                GEngine->AddOnScreenDebugMessage(4, DeltaTime * 1.1, FColor::Red, TEXT("Rotation Mis-Aligned"));
+                NewDirection = FVector::ZeroVector;
+            }
+
+            FHitResult Hit;
+
+            if (!SafeMoveUpdatedComponent(NewDirection, NewRotation, true, Hit))
+
+            {
+                GEngine->AddOnScreenDebugMessage(3, DeltaTime * 1.1, FColor::Red, TEXT("Colliding with Something"));
+
+                SlideAlongSurface(NewDirection, 1.0f - Hit.Time, Hit.Normal, Hit);
+            }
+
+            else {
+                GEngine->AddOnScreenDebugMessage(3, DeltaTime * 1.1, FColor::Green, TEXT("No collison, OK to move"));
+                MoveUpdatedComponent(NewDirection, NewRotation, false);
+            }
+
+            CachedVelocity = NewDirection;
+
+            HandleGroundInteraction(DeltaTime);
         }
-
-        CachedVelocity = NewDirection;
-
-        HandleGroundInteraction(DeltaTime);
     }
 }
 
@@ -90,7 +101,7 @@ FRotator UUnitNavMovementComponent::GetVelocityRotator(float DeltaTime)
     FRotator DeltaRot = RawVelocRotation - PawnOwner->GetActorRotation();
 
     // if we're within the rotation tolerance - early out
-    if (DeltaRot.IsNearlyZero(RotationTolerance)) {
+    if (DeltaRot.IsNearlyZero(RotationTolerance *0.5)) {
 
         return PawnOwner->GetActorRotation();
     }
@@ -242,15 +253,15 @@ void UUnitNavMovementComponent::HandleGroundInteraction(float DeltaTime)
     FCollisionQueryParams CollisionParams;
     CollisionParams.AddIgnoredActor(GetOwner());
     float DistanceToScan = 100.0f;
+    UBoxComponent* ForeBox = OwningUnit->GetForwardCollisionBox();
+    UBoxComponent* AftBox = OwningUnit->GetAftCollisionBox();
 
     // scan the front first
-
     FHitResult FwdLineTraceResult;
-
-    FVector FwdCollisionLocation = OwningUnit->GetForwardCollisionBox()->GetComponentLocation();
+    FVector FwdCollisionLocation = ForeBox->GetComponentLocation();
 
     // get a direction downwards from the collision box
-    FRotator FwdCollisionRotation = (OwningUnit->GetForwardCollisionBox()->GetUpVector().Rotation()) *= -1;
+    FRotator FwdCollisionRotation = (ForeBox->GetUpVector().Rotation()) *= -1;
 
     // scan 100 units in the dwds direction
     FVector FwdScanTo = FwdCollisionLocation + FwdCollisionRotation.Vector() * DistanceToScan;
@@ -261,11 +272,10 @@ void UUnitNavMovementComponent::HandleGroundInteraction(float DeltaTime)
 
     // scan the back
     FHitResult AftLineTraceResult;
-
-    FVector AftCollisionLoc = OwningUnit->GetAftCollisionBox()->GetComponentLocation();
+    FVector AftCollisionLoc = AftBox->GetComponentLocation();
 
     // get a direction downwards from the collision box
-    FRotator AftCollisionRot = (OwningUnit->GetAftCollisionBox()->GetUpVector().Rotation()) *= -1;
+    FRotator AftCollisionRot = (AftBox->GetUpVector().Rotation()) *= -1;
 
     // scan 100 units in the dwds direction
     FVector AftScanTo = AftCollisionLoc + AftCollisionRot.Vector() * DistanceToScan;

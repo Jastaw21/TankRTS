@@ -39,8 +39,7 @@ AUnitBase::AUnitBase()
     SelectionDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("Selected Decal"));
     SelectionDecal->SetupAttachment(RootComponent);
     SelectionDecal->SetVisibility(false);
-
-    UIThumbnail = CreateDefaultSubobject<UTexture2D>(TEXT("UI Thumbnail"));
+   
 }
 
 // Called when the game starts or when spawned
@@ -71,7 +70,7 @@ void AUnitBase::SetDestination_Implementation(FVector Destination)
         AUnitAIControllerBase* AIController = Cast<AUnitAIControllerBase, AController>(ControllerPtr);
 
         if (AIController) {
-
+            GEngine->AddOnScreenDebugMessage(7, 1.0f, FColor::Cyan, TEXT("Asking Unit to Move"));
             AIController->GetBlackboardComponent()->SetValueAsVector(FName("ClickedLocation"), Destination);
         }
     }
@@ -83,9 +82,9 @@ UBoxComponent* AUnitBase::GetForwardCollisionBox()
 }
 
 UBoxComponent* AUnitBase::GetAftCollisionBox()
-   {
-   return AftCollisionComponent;
-   }
+{
+    return AftCollisionComponent;
+}
 
 UUnitNavMovementComponent* AUnitBase::GetNavMovement()
 {

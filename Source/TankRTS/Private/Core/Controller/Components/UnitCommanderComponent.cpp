@@ -117,6 +117,8 @@ void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
             RTSState->InsertPlayerControlledInteractable();
         }
     }
+
+    
 }
 
 void UUnitCommanderComponent::GetUnitDestination()
@@ -131,7 +133,9 @@ void UUnitCommanderComponent::GetUnitDestination()
 
                 if (Unit->GetClass()->ImplementsInterface(UHUDController::StaticClass()))
                     // ask the unit to move there
-                    Unit->Execute_SetDestination(Unit, Hit.Location);
+                    
+
+                Unit->Execute_SetDestination(Unit, Hit.Location);
             }
 
             if (IsValid(DestinationRing)) {
@@ -139,6 +143,10 @@ void UUnitCommanderComponent::GetUnitDestination()
                 UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, DestinationRing, Hit.Location);
             }
         }
+    }
+
+    else {
+        GEngine->AddOnScreenDebugMessage(6, 3.0f, FColor::Cyan, TEXT("No Units"));
     }
 }
 

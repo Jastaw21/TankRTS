@@ -36,12 +36,25 @@ EBTNodeResult::Type UUnitAITaskFindLoc::ExecuteTask(UBehaviorTreeComponent& Owne
 
             const UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetCurrent(GetWorld());
 
-            if (IsValid(NavSystem) && NavSystem->GetRandomPointInNavigableRadius(Origin, SearchRadius, Location)) {
+            if (IsValid(NavSystem) && NavSystem->GetRandomPointInNavigableRadius(Origin, 20.0f, Location)) {
 
                 AIController->GetBlackboardComponent()->SetValueAsVector(BlackboardKey.SelectedKeyName, Location.Location);
-               // Unit->SetIsUnitMoving( true );
+                // Unit->SetIsUnitMoving( true );
 
+            }
 
+            else {
+                FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+
+                if (!IsValid(NavSystem)) {
+                    GEngine->AddOnScreenDebugMessage(8, 1.0f, FColor { 124, 10, 100, 255 }, TEXT("nav system dead"));
+                }
+
+                else {
+                    GEngine->AddOnScreenDebugMessage(9, 1.0f, FColor { 124, 10, 100, 255 }, TEXT("Not Navigable"));
+                }
+
+                return EBTNodeResult::Failed;
             }
 
             FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);

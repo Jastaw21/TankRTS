@@ -20,6 +20,7 @@ class UUnitCommanderComponent;
 class ATankRTSHud;
 class AUnitBase;
 class USelectionUIWidget;
+class UFormationManager;
 
 // HUD Interface
 DECLARE_DYNAMIC_DELEGATE(FNotifyThatUnitsAreSelected);
@@ -39,19 +40,29 @@ public:
 public:
     UPROPERTY(VisibleAnywhere, Category = "Camera")
     UCameraControllerComponent* CameraControllerComponent;
+
     UPROPERTY(VisibleAnywhere, Category = "Unit Controller")
     UUnitCommanderComponent* UnitCommanderComponent;
+
+    UPROPERTY( VisibleAnywhere, Category = "Unit Controller" )
+    UFormationManager* FormationManagerComponent;
+
     // selected unit UI components
-    UPROPERTY( EditAnywhere )
+    UPROPERTY(EditAnywhere)
     TSubclassOf<class USelectionUIWidget> PlayerUIClass;
+
     UPROPERTY()
     USelectionUIWidget* PlayerUI;
 
     // used by movement subcomponent
-    FORCEINLINE ATankWidget* GetControlledCameraWidget() { return ControlledCameraWidget; }   
+    FORCEINLINE ATankWidget* GetControlledCameraWidget() { return ControlledCameraWidget; }
+
     // event to be triggered by the hud notifying units have been selected
     void NotifyUnitsAreSelected();
+
     FORCEINLINE USelectionUIWidget* GetSelectionUIWidget() { return PlayerUI; }
+
+    FORCEINLINE UUnitCommanderComponent* GetUnitCommander() { return UnitCommanderComponent; }
 
 protected:
     ATankWidget* ControlledCameraWidget;
@@ -59,4 +70,7 @@ protected:
 
 private:
     FORCEINLINE void Speak() { UE_LOG(LogTemp, Display, TEXT("Controller Speaking")); }
+
+
+    
 };

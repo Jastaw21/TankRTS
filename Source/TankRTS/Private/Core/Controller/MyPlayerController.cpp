@@ -13,6 +13,7 @@
 // subcomponents
 #include "Core/Controller/Components/UnitCommanderComponent.h"
 #include "TankRTS/Public/Core/Controller/Components/CameraControllerComponent.h"
+#include "Core/Controller/FormationManager.h"
 
 // other TankRTS classes
 #include "TankRTS/Public/Core/UI/HUD/TankRTSHud.h"
@@ -38,6 +39,8 @@ AMyPlayerController::AMyPlayerController()
 
     // set up the subcomponent that will handle selecting and ordering of units
     UnitCommanderComponent = CreateDefaultSubobject<UUnitCommanderComponent>(TEXT("Unit Controls"));
+
+    FormationManagerComponent = CreateDefaultSubobject<UFormationManager>( TEXT( "Formation Manager" ) );
 
     DefaultClickTraceChannel = ECollisionChannel::ECC_GameTraceChannel2;
 }
@@ -76,6 +79,7 @@ void AMyPlayerController::BeginPlay()
 void AMyPlayerController::NotifyUnitsAreSelected()
 {
     UnitCommanderComponent->FetchHUDSelectedUnits();
+    
 }
 
 ATankRTSHud* AMyPlayerController::GetHUDCasted()

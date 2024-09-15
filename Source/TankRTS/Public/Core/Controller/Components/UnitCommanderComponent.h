@@ -32,6 +32,7 @@ public:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     void SetControlInputs(UInputComponent* Input);
     void FetchHUDSelectedUnits();
+    FORCEINLINE TArray<AUnitBase*>* GetControlledUnitsArray() { return &SubscribedUnits; }
 
 private:
     TArray<AUnitBase*> SubscribedUnits;

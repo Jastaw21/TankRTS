@@ -34,8 +34,7 @@ public:
     // Called to bind functionality to input
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-    FORCEINLINE UTexture2D* GetUIImage() { return UIThumbnail; }
-
+   
 public:
     UPROPERTY(EditAnywhere)
     UStaticMeshComponent* Mesh; // the main unit mesh
@@ -46,8 +45,7 @@ public:
     UPROPERTY(EditAnywhere)
     UDecalComponent* SelectionDecal;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    UTexture2D* UIThumbnail;
+  
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UBoxComponent* BoxCollisionComponent;

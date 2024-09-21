@@ -48,6 +48,8 @@ private:
     void DrawHUDSelectionMarquee();
     void UpdateMousePositions(float Value);
 
+    void TogglePatrol();
+
     // input bindings
     FORCEINLINE void ToggleSelectionBoxBeingDrawn() { bIsSelectionBoxBeingDrawn = !(bIsSelectionBoxBeingDrawn); }
     FORCEINLINE void SetSelectionBoxBeingDrawnTrue() { bIsSelectionBoxBeingDrawn = true; }

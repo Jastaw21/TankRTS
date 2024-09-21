@@ -6,6 +6,7 @@
 #include "Core/UI/Widgets/SelectionUIWidget.h"
 #include "Core/Units/Base/UnitBase.h"
 #include "GameFramework/HUD.h"
+#include "TankRTS/Public/Core/AI/UnitAIStatus.h"
 #include "TankRTS/Public/Core/UI/HUD/TankRTSHud.h"
 
 #include "NiagaraFunctionLibrary.h"
@@ -61,6 +62,8 @@ void UUnitCommanderComponent::SetControlInputs(UInputComponent* InputComponent)
     InputComponent->BindAction("LeftShift", IE_Released, this, &UUnitCommanderComponent::EndRectangleDrawing);
 
     InputComponent->BindAxis("MouseX", this, &UUnitCommanderComponent::UpdateMousePositions);
+
+    InputComponent->BindAction("TogglePatrol", IE_Released, this, &UUnitCommanderComponent::TogglePatrol);
 }
 
 void UUnitCommanderComponent::FetchHUDSelectedUnits()
@@ -117,8 +120,6 @@ void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
             RTSState->InsertPlayerControlledInteractable();
         }
     }
-
-    
 }
 
 void UUnitCommanderComponent::GetUnitDestination()
@@ -133,9 +134,8 @@ void UUnitCommanderComponent::GetUnitDestination()
 
                 if (Unit->GetClass()->ImplementsInterface(UHUDController::StaticClass()))
                     // ask the unit to move there
-                    
 
-                Unit->Execute_SetDestination(Unit, Hit.Location);
+                    Unit->Execute_SetDestination(Unit, Hit.Location);
             }
 
             if (IsValid(DestinationRing)) {
@@ -174,6 +174,30 @@ void UUnitCommanderComponent::UpdateMousePositions(float Value)
     if (bIsSelectionBoxBeingDrawn) {
         Parent->GetMousePosition(MouseEnd.X, MouseEnd.Y);
         DrawHUDSelectionMarquee();
+    }
+}
+
+void UUnitCommanderComponent::TogglePatrol()
+{
+    for (AUnitBase* Unit : SubscribedUnits) {
+
+        UnitAIStatus Status;
+
+        switch (Unit->Execute_GetUnitStatus(Unit)) {
+        case UnitAIStatus::Patrolling:
+            Status = UnitAIStatus::Rest;
+            break;
+
+        case UnitAIStatus::Rest:
+            GEngine->AddOnScreenDebugMessage(99, 1.0f, FColor::Magenta, TEXT("Switching to Patrol"));
+            Status = UnitAIStatus::Patrolling;
+            break;
+
+        case UnitAIStatus::MovingTo:
+            Status = UnitAIStatus::Patrolling;
+        }
+
+        Unit->Execute_SetStatus(Unit, Status);
     }
 }
 

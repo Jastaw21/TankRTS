@@ -2,9 +2,9 @@
 
 #include "TankRTS/Public/Core/AI/UnitAIControllerBase.h"
 #include "BehaviorTree/BehaviorTree.h"
-#include "Navigation/PathFollowingComponent.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "TankRTS/Public/Core/AI/Tasks/UnitAITaskFindLoc.h"
 #include "TankRTS/Public/Core/Units/Base/UnitBase.h"
 
@@ -12,7 +12,6 @@ AUnitAIControllerBase::AUnitAIControllerBase()
 {
     BehaviourTreeComponent = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("Behaviour Tree Comp"));
     BlackBoardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("Blackboard Component"));
-   
 }
 
 void AUnitAIControllerBase::LogRequest()
@@ -43,8 +42,7 @@ void AUnitAIControllerBase::OnPossess(APawn* InPawn)
         UE_LOG(LogTemp, Display, TEXT("JJJAA"));
     }
 
-    AUnitBase* Unit = Cast<AUnitBase, APawn>(InPawn);   
-       
+    AUnitBase* Unit = Cast<AUnitBase, APawn>(InPawn);
 
     if (IsValid(Blackboard.Get()) && IsValid(BehaviourTree.Get()))
 

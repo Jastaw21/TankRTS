@@ -32,9 +32,10 @@ public:
 private:
 
 
-	UUnitCommanderComponent* GetUnitCommander();
-	
+	UUnitCommanderComponent* GetUnitCommander();	
 	TArray<AUnitBase*>* GetControlledUnits();
+
+	void ProvidePathing( AUnitBase* Unit, FVector& IdealDestination );
 
 		
 };

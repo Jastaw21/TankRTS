@@ -55,7 +55,7 @@ void UFormationManager::DrawUnitNumbers()
 
     for (AUnitBase* Unit : *Units) {
 
-        DrawDebugString(GetWorld(), Unit->GetActorLocation() + Unit->GetActorUpVector() * 100.0f, FString::Printf(TEXT("%d"), UnitNumber),(AActor*)0,FColor::Red,0.0f);
+        DrawDebugString(GetWorld(), Unit->GetActorLocation() + Unit->GetActorUpVector() * 100.0f, FString::Printf(TEXT("%d"), UnitNumber), (AActor*)0, FColor::Red, 0.0f);
         UnitNumber++;
     }
 }
@@ -63,4 +63,9 @@ void UFormationManager::DrawUnitNumbers()
 TArray<AUnitBase*>* UFormationManager::GetControlledUnits()
 {
     return GetUnitCommander()->GetControlledUnitsArray();
+}
+
+void UFormationManager::ProvidePathing(AUnitBase* Unit, FVector& IdealDestination)
+{
+    Unit->GetDestination();
 }

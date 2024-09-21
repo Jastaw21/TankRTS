@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/AI/UnitAIStatus.h"
+
+
 #include "HUDControllerInterface.generated.h"
 /**
  * 
@@ -30,5 +33,10 @@ public:
 	UFUNCTION( BlueprintCallable, BlueprintNativeEvent, Category = "Navigation" )
 	void SetDestination( FVector Dest );
 
+	UFUNCTION( BlueprintCallable, BlueprintNativeEvent, Category = "Navigation" )
+	void SetStatus( UnitAIStatus UnitStatus );
+
+	UFUNCTION( BlueprintCallable, BlueprintNativeEvent, Category = "Navigation" )
+	UnitAIStatus GetUnitStatus();
 
 };

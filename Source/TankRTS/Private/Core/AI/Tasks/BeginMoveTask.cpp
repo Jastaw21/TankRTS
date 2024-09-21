@@ -9,11 +9,13 @@
 UBeginMoveTask::UBeginMoveTask()
 {
     NodeName = TEXT("Set-off Movement");
-    BlackboardKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UBeginMoveTask, BlackboardKey));
+    BlackboardKey.AddBoolFilter(this, GET_MEMBER_NAME_CHECKED(UBeginMoveTask, BlackboardKey.SelectedKeyName));
 }
 
 EBTNodeResult::Type UBeginMoveTask::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
+
+   EBTNodeResult::Type NodeResult = EBTNodeResult::Failed;
 
     AAIController* AIController { OwnerComp.GetAIOwner() };
 
@@ -24,10 +26,11 @@ EBTNodeResult::Type UBeginMoveTask::ExecuteTask(UBehaviorTreeComponent& OwnerCom
             Unit->SetIsUnitMoving(true);
 
             AIController->GetBlackboardComponent()->SetValueAsEnum( FName( "UnitStatus" ), UnitAIStatus::MovingTo );
+            NodeResult = EBTNodeResult::Succeeded;
         }
     }
 
-    return EBTNodeResult::Type();
+    return NodeResult;
 }
 
 FString UBeginMoveTask::GetStaticDescription() const

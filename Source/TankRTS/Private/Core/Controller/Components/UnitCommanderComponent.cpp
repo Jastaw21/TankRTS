@@ -181,6 +181,8 @@ void UUnitCommanderComponent::TogglePatrol()
 {
     for (AUnitBase* Unit : SubscribedUnits) {
 
+
+       GEngine->AddOnScreenDebugMessage( 199, 1.0f, FColor::Black, TEXT( "Patrol Toggle Hit" ) );
         UnitAIStatus Status;
 
         switch (Unit->Execute_GetUnitStatus(Unit)) {

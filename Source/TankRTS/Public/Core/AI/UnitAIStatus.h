@@ -15,5 +15,4 @@ enum UnitAIStatus {
     Rest UMETA(DisplayName = "Rest"),
     MovingTo UMETA(DisplayName = "Moving To Location"),
     Patrolling UMETA(DisplayName = "Patrolling")
-
 };

@@ -16,6 +16,7 @@ EBTNodeResult::Type URTSEndMoveTo::ExecuteTask(UBehaviorTreeComponent& OwnerComp
 
     if (AIController) {
         AIController->GetBlackboardComponent()->SetValueAsEnum(FName("UnitStatus"), UnitAIStatus::Rest);
+        GEngine->AddOnScreenDebugMessage( 119, 1.0f, FColor::Black, TEXT( "Ending Movmeent" ) );
 
         return EBTNodeResult::Succeeded;
     }

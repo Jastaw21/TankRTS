@@ -50,13 +50,13 @@ AUnitBase::AUnitBase()
     // set the default AI behaviour to be rest
     AController* ControllerPtr = GetController();
 
-    if (ControllerPtr) {
-        AUnitAIControllerBase* AIController = Cast<AUnitAIControllerBase, AController>(ControllerPtr);
+    //if (ControllerPtr) {
+    //    AUnitAIControllerBase* AIController = Cast<AUnitAIControllerBase, AController>(ControllerPtr);
 
-        if (AIController) {
-            AIController->GetBlackboardComponent()->SetValueAsEnum(FName("UnitStatus"), UnitAIStatus::Rest);
-        }
-    }
+    //    if (AIController) {
+    //        AIController->GetBlackboardComponent()->SetValueAsEnum(FName("UnitStatus"), UnitAIStatus::Rest);
+    //    }
+    //}
 }
 
 // Called when the game starts or when spawned
@@ -89,7 +89,7 @@ void AUnitBase::SetDestination_Implementation(FVector Destination)
         if (AIController) {
             GEngine->AddOnScreenDebugMessage(7, 1.0f, FColor::Cyan, TEXT("Asking Unit to Move"));
             AIController->GetBlackboardComponent()->SetValueAsVector(FName("ClickedLocation"), Destination);
-            AIController->GetBlackboardComponent()->SetValueAsEnum(FName("UnitStatus"), UnitAIStatus::MovingTo);
+            UnitStatus = UnitAIStatus::MovingTo;
            
         }
     }

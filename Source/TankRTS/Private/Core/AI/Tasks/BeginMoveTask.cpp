@@ -2,9 +2,9 @@
 
 #include "Core/AI/Tasks/BeginMoveTask.h"
 #include "AIController.h"
-#include "Core/Units/Base/UnitBase.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Core/AI/UnitAIStatus.h"
+#include "Core/Units/Base/UnitBase.h"
 
 UBeginMoveTask::UBeginMoveTask()
 {
@@ -15,7 +15,7 @@ UBeginMoveTask::UBeginMoveTask()
 EBTNodeResult::Type UBeginMoveTask::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 
-   EBTNodeResult::Type NodeResult = EBTNodeResult::Failed;
+    EBTNodeResult::Type NodeResult = EBTNodeResult::Failed;
 
     AAIController* AIController { OwnerComp.GetAIOwner() };
 
@@ -23,9 +23,10 @@ EBTNodeResult::Type UBeginMoveTask::ExecuteTask(UBehaviorTreeComponent& OwnerCom
         APawn* AIPawn { AIController->GetPawn() };
         if (AIPawn) {
             AUnitBase* Unit = Cast<AUnitBase, APawn>(AIPawn);
-            Unit->SetIsUnitMoving(true);
 
-            AIController->GetBlackboardComponent()->SetValueAsEnum( FName( "UnitStatus" ), UnitAIStatus::MovingTo );
+            Unit->SetIsUnitMoving(true);
+            Unit->Execute_SetStatus(Unit, UnitAIStatus::MovingTo);
+
             NodeResult = EBTNodeResult::Succeeded;
         }
     }

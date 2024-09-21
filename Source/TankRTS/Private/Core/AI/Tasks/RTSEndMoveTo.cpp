@@ -4,6 +4,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Core/AI/UnitAIStatus.h"
+#include "Core/Units/Base/UnitBase.h"
 
 URTSEndMoveTo::URTSEndMoveTo()
 {
@@ -15,13 +16,14 @@ EBTNodeResult::Type URTSEndMoveTo::ExecuteTask(UBehaviorTreeComponent& OwnerComp
     AAIController* AIController { OwnerComp.GetAIOwner() };
 
     if (AIController) {
-        AIController->GetBlackboardComponent()->SetValueAsEnum(FName("UnitStatus"), UnitAIStatus::Rest);
-        GEngine->AddOnScreenDebugMessage( 119, 1.0f, FColor::Black, TEXT( "Ending Movmeent" ) );
 
-        return EBTNodeResult::Succeeded;
+        APawn* AIPawn { AIController->GetPawn() };
+        if (AIPawn) {
+            AUnitBase* Unit = Cast<AUnitBase, APawn>(AIPawn);
+            Unit->Execute_SetStatus(Unit, UnitAIStatus::Rest);
+            return EBTNodeResult::Succeeded;
+        }
     }
 
-    else {
-        return EBTNodeResult::Failed;
-    }
+    return EBTNodeResult::Failed;
 }

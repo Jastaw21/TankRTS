@@ -59,10 +59,22 @@ void ARTSInteractableBase::Speak()
 
 ARTSInteractableBase* ARTSInteractableBase::OnClickedRTS()
 {
-    return nullptr;
+    return SelectRTS_Implementation();
 }
 
 ARTSInteractableBase* ARTSInteractableBase::OnDroppedRTS()
 {
+    DeselectRTS_Implementation();
     return nullptr;
+}
+
+ARTSInteractableBase* ARTSInteractableBase::SelectRTS_Implementation()
+{
+   SelectionDecal->SetVisibility( true );
+   return this;
+}
+
+void ARTSInteractableBase::DeselectRTS_Implementation()
+{
+    SelectionDecal->SetVisibility(false);
 }

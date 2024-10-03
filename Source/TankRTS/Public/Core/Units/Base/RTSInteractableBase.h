@@ -10,13 +10,12 @@
 
 #include "RTSInteractableBase.generated.h"
 
-
 DECLARE_LOG_CATEGORY_EXTERN(RTSInteractables, Display, All);
 
 class UCapsuleComponent;
 
 UCLASS()
-class TANKRTS_API ARTSInteractableBase : public APawn, public IContInter{
+class TANKRTS_API ARTSInteractableBase : public APawn, public IContInter {
     GENERATED_BODY()
 
     /*
@@ -30,7 +29,6 @@ public:
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
-
 
 public:
     // Called every frame
@@ -67,4 +65,8 @@ public:
     virtual void Speak();
     virtual ARTSInteractableBase* OnClickedRTS();
     virtual ARTSInteractableBase* OnDroppedRTS();
+
+    // interface functions
+    virtual ARTSInteractableBase* SelectRTS_Implementation() override;
+    virtual void DeselectRTS_Implementation() override;
 };

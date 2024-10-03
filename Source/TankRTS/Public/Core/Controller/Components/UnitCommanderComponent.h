@@ -36,6 +36,7 @@ public:
 
 private:
     TArray<AUnitBase*> SubscribedUnits;
+    TMap<int32, uint16> UnitRankings;
     AMyPlayerController* Parent;
 
     ATankRTSHud* GetHUDCasted();

@@ -103,7 +103,10 @@ void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
 
     if (UnitToSelect->GetClass()->ImplementsInterface(UHUDController::StaticClass())) {
 
-        SubscribedUnits.AddUnique(IHUDController::Execute_SelectUnit(UnitToSelect));
+        int32 IndexAdded = SubscribedUnits.AddUnique(IHUDController::Execute_SelectUnit(UnitToSelect));
+
+        
+        UnitRankings.Add(IndexAdded, 2);
     }
 
     if (Parent->GetSelectionUIWidget()) {
@@ -112,15 +115,15 @@ void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
         Parent->GetSelectionUIWidget()->AddNumSelectedUnits(NewElements);
     }
 
-    if (GetWorld()) {
-        AGameStateBase* TempGameState = GetWorld()->GetGameState();
+    // if (GetWorld()) {
+    //     AGameStateBase* TempGameState = GetWorld()->GetGameState();
 
-        if (TempGameState) {
-            ARTSGameState* RTSState = Cast<ARTSGameState, AGameStateBase>(TempGameState);
-            RTSState->InsertPlayerControlledInteractable();
-        }
-    }
+    //    if (TempGameState) {
+    //        ARTSGameState* RTSState = Cast<ARTSGameState, AGameStateBase>(TempGameState);
+    //        RTSState->InsertPlayerControlledInteractable();
+    //    }
 }
+
 
 void UUnitCommanderComponent::GetUnitDestination()
 {
@@ -158,6 +161,7 @@ void UUnitCommanderComponent::DropAllSelectedUnits()
     }
 
     SubscribedUnits.Empty();
+    UnitRankings.Empty();
 
     if (Parent->GetSelectionUIWidget()) {
         Parent->GetSelectionUIWidget()->ResetNumUnitsSelected();
@@ -181,8 +185,7 @@ void UUnitCommanderComponent::TogglePatrol()
 {
     for (AUnitBase* Unit : SubscribedUnits) {
 
-
-       GEngine->AddOnScreenDebugMessage( 199, 1.0f, FColor::Black, TEXT( "Patrol Toggle Hit" ) );
+        GEngine->AddOnScreenDebugMessage(199, 1.0f, FColor::Black, TEXT("Patrol Toggle Hit"));
         UnitAIStatus Status;
 
         switch (Unit->Execute_GetUnitStatus(Unit)) {

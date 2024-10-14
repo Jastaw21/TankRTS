@@ -11,8 +11,10 @@ ARTSBuilding::ARTSBuilding()
 
     FInteractableDetails Details;
     Details.Interact_Type = InteractableType::Building;
-    Details.GamePlayName = FString(TEXT("Base Building"));
+    Details.GamePlayName =TEXT("Base Building");
     InteractableDetails = Details;
+
+   
 }
 
 void ARTSBuilding::BeginPlay()

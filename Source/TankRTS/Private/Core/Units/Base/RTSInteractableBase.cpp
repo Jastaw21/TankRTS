@@ -42,9 +42,9 @@ void ARTSInteractableBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-FString* ARTSInteractableBase::GetGameplayName()
+FString & ARTSInteractableBase::GetGameplayName()
 {
-    return &InteractableDetails.GamePlayName;
+    return InteractableDetails.GamePlayName;
 }
 
 InteractableType ARTSInteractableBase::GetInteractableType()
@@ -54,7 +54,8 @@ InteractableType ARTSInteractableBase::GetInteractableType()
 
 void ARTSInteractableBase::Speak()
 {
-    UE_LOG(RTSInteractables, Display, TEXT("Interactable, gp name: %s, speaking"), GetGameplayName());
+    //UE_LOG(RTSInteractables, Display, TEXT("Interactable, gp name: %s, speaking"), GetGameplayName());
+    GEngine->AddOnScreenDebugMessage(192, 1.0f, FColor::Red, FString::Printf(TEXT("Interactable, gp name: %s, speaking"), *GetGameplayName()));
 }
 
 ARTSInteractableBase* ARTSInteractableBase::OnClickedRTS()
@@ -70,8 +71,8 @@ ARTSInteractableBase* ARTSInteractableBase::OnDroppedRTS()
 
 ARTSInteractableBase* ARTSInteractableBase::SelectRTS_Implementation()
 {
-   SelectionDecal->SetVisibility( true );
-   return this;
+    SelectionDecal->SetVisibility(true);
+    return this;
 }
 
 void ARTSInteractableBase::DeselectRTS_Implementation()

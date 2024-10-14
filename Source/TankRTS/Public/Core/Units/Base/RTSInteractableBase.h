@@ -59,7 +59,7 @@ public:
     TObjectPtr<UCapsuleComponent> CapsuleComponent;
 
     // access functions for the above
-    FString* GetGameplayName();
+    FString& GetGameplayName();
     InteractableType GetInteractableType();
 
     virtual void Speak();

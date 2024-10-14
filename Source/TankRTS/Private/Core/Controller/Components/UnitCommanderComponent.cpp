@@ -7,7 +7,9 @@
 #include "Core/Units/Base/UnitBase.h"
 #include "GameFramework/HUD.h"
 #include "TankRTS/Public/Core/AI/UnitAIStatus.h"
+#include "TankRTS/Public/Core/Interactables/Interfaces/ControllerInteractableInterface.h"
 #include "TankRTS/Public/Core/UI/HUD/TankRTSHud.h"
+#include "TankRTS/Public/Core/Units/Base/RTSInteractableBase.h"
 
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
@@ -90,8 +92,15 @@ void UUnitCommanderComponent::PollAreaUnderCursor()
     UnitHitSuccess = Parent->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_GameTraceChannel1), false, UnitHit);
 
     if (UnitHitSuccess) {
-        AUnitBase* HitUnit = Cast<AUnitBase, AActor>(UnitHit.GetActor());
-        SelectUnit(HitUnit);
+
+        if (UnitHit.GetActor()->IsA<ARTSInteractableBase>()) {
+            GEngine->AddOnScreenDebugMessage(919, 1.0f, FColor { 250, 201, 170, 255 }, TEXT("INTERACTABLE HIT"));
+
+            ARTSInteractableBase* Interactable = Cast<ARTSInteractableBase, AActor>(UnitHit.GetActor());
+            Interactable->Speak();
+        }
+        // AUnitBase* HitUnit = Cast<AUnitBase, AActor>(UnitHit.GetActor());
+        // SelectUnit(HitUnit);
     }
 }
 
@@ -105,7 +114,6 @@ void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
 
         int32 IndexAdded = SubscribedUnits.AddUnique(IHUDController::Execute_SelectUnit(UnitToSelect));
 
-        
         UnitRankings.Add(IndexAdded, 2);
     }
 
@@ -114,16 +122,7 @@ void UUnitCommanderComponent::SelectUnit(AUnitBase* UnitToSelect)
         int NewElements = SubscribedUnits.Num() - PreviousElements;
         Parent->GetSelectionUIWidget()->AddNumSelectedUnits(NewElements);
     }
-
-    // if (GetWorld()) {
-    //     AGameStateBase* TempGameState = GetWorld()->GetGameState();
-
-    //    if (TempGameState) {
-    //        ARTSGameState* RTSState = Cast<ARTSGameState, AGameStateBase>(TempGameState);
-    //        RTSState->InsertPlayerControlledInteractable();
-    //    }
 }
-
 
 void UUnitCommanderComponent::GetUnitDestination()
 {
@@ -165,6 +164,7 @@ void UUnitCommanderComponent::DropAllSelectedUnits()
 
     if (Parent->GetSelectionUIWidget()) {
         Parent->GetSelectionUIWidget()->ResetNumUnitsSelected();
+       
     }
 }
 

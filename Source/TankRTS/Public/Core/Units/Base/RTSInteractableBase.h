@@ -8,11 +8,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 
+
 #include "RTSInteractableBase.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(RTSInteractables, Display, All);
 
-class UCapsuleComponent;
+
+class UBoxComponent;
 
 UCLASS()
 class TANKRTS_API ARTSInteractableBase : public APawn, public IContInter {
@@ -56,7 +58,11 @@ public:
     UStaticMeshComponent* Mesh; // the main mesh
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TObjectPtr<UCapsuleComponent> CapsuleComponent;
+    USceneComponent* DefaultRootComponent;
+
+    UPROPERTY( EditAnywhere, BlueprintReadWrite )
+    UBoxComponent* BasicCollisionBox;
+
 
     // access functions for the above
     FString& GetGameplayName();

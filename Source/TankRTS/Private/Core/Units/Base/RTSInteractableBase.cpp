@@ -2,6 +2,8 @@
 
 #include "Core/Units/Base/RTSInteractableBase.h"
 
+
+
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 
@@ -26,7 +28,11 @@ ARTSInteractableBase::ARTSInteractableBase()
     BasicCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Primary Collision Box"));
     BasicCollisionBox->SetupAttachment(RootComponent);
 
-    UIThumbnail = CreateDefaultSubobject<UTexture2D>(TEXT("UI Thumbnail"));
+    BasicCollisionBox->SetCollisionResponseToChannel( ECC_GameTraceChannel1, ECollisionResponse::ECR_Block);
+
+
+    UIThumbnail
+        = CreateDefaultSubobject<UTexture2D>(TEXT("UI Thumbnail"));
 }
 
 // Called when the game starts or when spawned

@@ -8,9 +8,6 @@
 // ..
 #include "CameraControllerComponent.generated.h"
 
-
-
-
 class UInputComponent;
 class AMyPlayerController;
 class ATankWidget;
@@ -34,28 +31,37 @@ public:
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
+    // input handlers
     void AddZoomInput(float Value);
     void AddLateralMapInput(float Value);
     void AddVerticalMapInput(float Value);
+    void AddSnapToLocation();
+    void FORCEINLINE ToggleYawAllowed() { bCameraAllowPitchYaw = !bCameraAllowPitchYaw; }
+
+    // handle existing inputs
     void HandleLateralMouse(float Value);
     void HandleVerticalMouse(float Value);
     void EdgeScroll(float Value);
-    bool IsInEdgeZone(const float& xPercent, const float& yPercent);
 
+    // helper functions
+    bool IsInEdgeZone(const float& xPercent, const float& yPercent);
     void CalculateInterpolations(const float& xPercent, const float& YPercent, float& InHoriz, float& InVertical);
 
+    // data to track control of the camers
     bool bCameraAllowPitchYaw = false;
-
-    void FORCEINLINE ToggleYawAllowed() { bCameraAllowPitchYaw = !bCameraAllowPitchYaw; }
+    FVector SnapToLocation { 0, 0, 0 };
+    bool bIsSnappingTo;
 
     AMyPlayerController* OwningController;
     ATankWidget* UpdatedComponent;
-    FORCEINLINE void Speak() { UE_LOG( LogTemp, Display, TEXT( "Camera Cont Cmp Speaking" ) ); }
-
+    FORCEINLINE void Speak() { UE_LOG(LogTemp, Display, TEXT("Camera Cont Cmp Speaking")); }
 
 public:
-    void GetComponents( ATankWidget* UpdatedWidget, AMyPlayerController* OwnContr );
-   
+    void GetComponents(ATankWidget* UpdatedWidget, AMyPlayerController* OwnContr);
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Movement") // expressed as a % of viewport size
     float EdgeZoneSize = 0.2f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Movement")
+    float SnapToAcceptanceRadius = 3.0f;
 };

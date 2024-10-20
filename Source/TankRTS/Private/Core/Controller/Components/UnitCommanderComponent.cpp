@@ -128,10 +128,10 @@ void UUnitCommanderComponent::GetUnitDestination()
 {
     if (SubscribedUnits.Num() > 0) {
         FHitResult Hit;
-        bool bHitSucc = false;
-        bHitSucc = Parent->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
+        bool HitSuccessful = false;
+        HitSuccessful = Parent->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
 
-        if (bHitSucc) {
+        if (HitSuccessful) {
             for (AUnitBase* Unit : SubscribedUnits) {
 
                 if (Unit->GetClass()->ImplementsInterface(UHUDController::StaticClass()))

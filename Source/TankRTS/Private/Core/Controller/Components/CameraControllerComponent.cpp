@@ -5,30 +5,30 @@
 #include "TankRTS/Public/Core/Camera/Components/CameraWidgetMovement.h"
 #include "TankRTS/Public/Core/Controller/MyPlayerController.h"
 
-
-
 // Sets default values for this component's properties
 UCameraControllerComponent::UCameraControllerComponent()
 {
 
     // Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
     // off to improve performance if you don't need them.
-    PrimaryComponentTick.bCanEverTick = true;    
+    PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UCameraControllerComponent::SetControlInputs(UInputComponent* InputComponent)
 {
- 
+
     // bind camera controls
     InputComponent->BindAxis("ZoomSpringArm", this, &UCameraControllerComponent::AddZoomInput);
     InputComponent->BindAxis("MapLeft", this, &UCameraControllerComponent::AddLateralMapInput);
     InputComponent->BindAxis("MapUp", this, &UCameraControllerComponent::AddVerticalMapInput);
 
-    InputComponent->BindAction("RightMouse", IE_Pressed, this, &UCameraControllerComponent::ToggleYawAllowed);   
+    InputComponent->BindAction("RightMouse", IE_Pressed, this, &UCameraControllerComponent::ToggleYawAllowed);
     InputComponent->BindAction("RightMouse", IE_Released, this, &UCameraControllerComponent::ToggleYawAllowed);
-    InputComponent->BindAction( "Test", IE_Pressed, this, &UCameraControllerComponent::Speak);
+    InputComponent->BindAction("Test", IE_Pressed, this, &UCameraControllerComponent::Speak);
     InputComponent->BindAxis("YawSpringArm", this, &UCameraControllerComponent::HandleLateralMouse);
     InputComponent->BindAxis("PitchSpringArm", this, &UCameraControllerComponent::HandleVerticalMouse);
+
+    InputComponent->BindAction("JumpCameraToLocation", IE_Pressed, this, &UCameraControllerComponent::AddSnapToLocation);
 }
 
 // Called when the game starts
@@ -52,9 +52,28 @@ void UCameraControllerComponent::TickComponent(float DeltaTime, ELevelTick TickT
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+    if (bIsSnappingTo) {
+        FVector DeltaVector = (SnapToLocation * FVector(1, 1, 0)) - (UpdatedComponent->GetActorLocation() * FVector(1, 1, 0));
+
+        if (FMath::IsNearlyZero(DeltaVector.Length(), SnapToAcceptanceRadius)) {
+            bIsSnappingTo = false;
+            SnapToLocation = FVector::ZeroVector;
+        }
+
+        else {
+
+            float ForwardComponent = FVector::DotProduct(DeltaVector, UpdatedComponent->GetActorForwardVector());
+            float RightComponent = FVector::DotProduct(DeltaVector, UpdatedComponent->GetActorRightVector());
+
+            AddLateralMapInput(RightComponent);
+            AddVerticalMapInput(ForwardComponent);
+        }
+    }
+
     // ...
 }
 
+// get the inputs
 void UCameraControllerComponent::AddZoomInput(float Value)
 {
 
@@ -82,26 +101,39 @@ void UCameraControllerComponent::AddVerticalMapInput(float Value)
     }
 }
 
+void UCameraControllerComponent::AddSnapToLocation()
+{
+    FHitResult Hit;
+    bool HitSuccessful = false;
+    HitSuccessful = OwningController->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
+
+    if (HitSuccessful) {
+        bIsSnappingTo = true;
+        SnapToLocation = Hit.Location;
+    }
+}
+
+// handle the inputs
 void UCameraControllerComponent::HandleLateralMouse(float Value)
 {
-     if (bCameraAllowPitchYaw) {
-         UpdatedComponent->GetCameraMovement()->JAddYawInput(Value);
-     }
+    if (bCameraAllowPitchYaw) {
+        UpdatedComponent->GetCameraMovement()->JAddYawInput(Value);
+    }
 
-     else if (GEngine) {
-         EdgeScroll(Value);
-     }
+    else if (GEngine) {
+        EdgeScroll(Value);
+    }
 }
 
 void UCameraControllerComponent::HandleVerticalMouse(float Value)
 {
-     if (bCameraAllowPitchYaw) {
-         UpdatedComponent->GetCameraMovement()->JAddPitchInput(Value);
-     }
+    if (bCameraAllowPitchYaw) {
+        UpdatedComponent->GetCameraMovement()->JAddPitchInput(Value);
+    }
 
-     else if (GEngine) {
-         EdgeScroll(Value);
-     }
+    else if (GEngine) {
+        EdgeScroll(Value);
+    }
 }
 
 void UCameraControllerComponent::EdgeScroll(float Value)
@@ -136,6 +168,7 @@ void UCameraControllerComponent::EdgeScroll(float Value)
     }
 }
 
+// helpers
 bool UCameraControllerComponent::IsInEdgeZone(const float& xPercent, const float& yPercent)
 {
     return (xPercent <= EdgeZoneSize || xPercent >= (1 - EdgeZoneSize) || yPercent <= EdgeZoneSize || yPercent >= (1 - EdgeZoneSize));
@@ -166,9 +199,8 @@ void UCameraControllerComponent::CalculateInterpolations(const float& xPercent, 
     }
 }
 
-void UCameraControllerComponent::GetComponents( ATankWidget* UpdatedWidget, AMyPlayerController* OwnContr )
-    {
+void UCameraControllerComponent::GetComponents(ATankWidget* UpdatedWidget, AMyPlayerController* OwnContr)
+{
     OwningController = OwnContr;
     UpdatedComponent = UpdatedWidget;
-    }
-
+}
